@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional Employee Management System Design System
+All colors MUST be HSL for consistency across light/dark modes.
+Corporate blue theme with modern gradients and professional styling.
+*/
+
+@layer base {
+  :root {
+    /* Core backgrounds */
+    --background: 250 60% 98%;
+    --foreground: 228 84% 12%;
+
+    /* Cards and surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 228 84% 12%;
+
+    /* Popovers and dropdowns */
+    --popover: 0 0% 100%;
+    --popover-foreground: 228 84% 12%;
+
+    /* Primary brand colors - Professional blue */
+    --primary: 217 91% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 217 91% 55%;
+    --primary-dark: 217 91% 35%;
+
+    /* Secondary colors - Soft blue-gray */
+    --secondary: 217 32% 95%;
+    --secondary-foreground: 228 84% 12%;
+
+    /* Muted backgrounds and text */
+    --muted: 217 32% 96%;
+    --muted-foreground: 228 16% 46%;
+
+    /* Accent colors - Vibrant blue */
+    --accent: 210 100% 96%;
+    --accent-foreground: 217 91% 45%;
+
+    /* Success, warning, destructive states */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 217 32% 89%;
+    --input: 217 32% 89%;
+    --ring: 217 91% 45%;
+
+    /* Corporate gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 45%), hsl(217 91% 55%));
+    --gradient-secondary: linear-gradient(135deg, hsl(217 32% 95%), hsl(250 60% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 45%), hsl(210 100% 50%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(217 32% 98%));
+
+    /* Shadows for depth */
+    --shadow-card: 0 4px 12px hsl(217 91% 45% / 0.08);
+    --shadow-card-hover: 0 8px 25px hsl(217 91% 45% / 0.12);
+    --shadow-header: 0 2px 8px hsl(217 91% 45% / 0.06);
+
+    /* Border radius */
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Core backgrounds - Dark corporate theme */
+    --background: 228 84% 6%;
+    --foreground: 250 60% 98%;
+
+    /* Cards and surfaces */
+    --card: 228 84% 8%;
+    --card-foreground: 250 60% 98%;
+
+    /* Popovers and dropdowns */
+    --popover: 228 84% 8%;
+    --popover-foreground: 250 60% 98%;
+
+    /* Primary brand colors - Bright blue for dark mode */
+    --primary: 217 91% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 217 91% 65%;
+    --primary-dark: 217 91% 45%;
+
+    /* Secondary colors - Dark blue-gray */
+    --secondary: 228 32% 15%;
+    --secondary-foreground: 250 60% 98%;
+
+    /* Muted backgrounds and text */
+    --muted: 228 32% 12%;
+    --muted-foreground: 228 16% 65%;
+
+    /* Accent colors */
+    --accent: 228 32% 15%;
+    --accent-foreground: 217 91% 55%;
+
+    /* Success, warning, destructive states */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 55%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 228 32% 18%;
+    --input: 228 32% 18%;
+    --ring: 217 91% 55%;
+
+    /* Corporate gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 55%), hsl(217 91% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(228 32% 15%), hsl(228 84% 8%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 55%), hsl(210 100% 60%));
+    --gradient-card: linear-gradient(145deg, hsl(228 84% 8%), hsl(228 32% 10%));
+
+    /* Dark mode shadows */
+    --shadow-card: 0 4px 12px hsl(228 84% 4% / 0.3);
+    --shadow-card-hover: 0 8px 25px hsl(228 84% 4% / 0.4);
+    --shadow-header: 0 2px 8px hsl(228 84% 4% / 0.2);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background: linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Force dark mode styles application */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark * {
+    border-color: hsl(var(--border));
+  }
+}
+
+@layer components {
+  /* Dashboard card styles */
+  .dashboard-card {
+    @apply bg-card text-card-foreground rounded-lg border shadow-sm hover:shadow-md transition-all duration-200;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .dashboard-card:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* Navigation styles */
+  .nav-header {
+    @apply bg-card/80 backdrop-blur-md border-b;
+    box-shadow: var(--shadow-header);
+  }
+
+  /* Form input enhancements */
+  .form-input {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary;
+  }
+
+  /* Button enhancements */
+  .btn-gradient {
+    background: var(--gradient-primary);
+    @apply text-primary-foreground border-0 hover:opacity-90 transition-all duration-200;
+  }
+
+  .btn-secondary-gradient {
+    background: var(--gradient-secondary);
+    @apply text-secondary-foreground border-0 hover:opacity-90 transition-all duration-200;
+  }
+
+  /* Status indicators */
+  .status-success {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  .status-pending {
+    @apply bg-secondary text-secondary-foreground;
+  }
+
+  /* Data table styles */
+  .data-table {
+    @apply bg-card rounded-lg overflow-hidden;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Animation utilities */
+  .fade-in {
+    @apply animate-in fade-in-0 duration-300;
+  }
+
+  .slide-in-from-left {
+    @apply animate-in slide-in-from-left-4 duration-300;
+  }
+
+  .slide-in-from-right {
+    @apply animate-in slide-in-from-right-4 duration-300;
+  }
+}
