@@ -73,6 +73,8 @@ const Profile = () => {
     }
   };
 
+  const { changePassword } = useAuth();
+
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("New passwords do not match");
@@ -83,14 +85,22 @@ const Profile = () => {
       return;
     }
 
-    // Simulate password change
-    toast.success("Password changed successfully!");
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    try {
+      await changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword,
+        passwordData.confirmPassword
+      );
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error("Password change failed:", err);
+    }
   };
+
 
   const handleResumeUpload = (event) => {
     const file = event.target.files[0];
@@ -512,7 +522,10 @@ const Profile = () => {
                     id="resume-upload"
                   />
                   <Label htmlFor="resume-upload" className="cursor-pointer">
-                    <Button className="btn-gradient">
+                    <Button className="btn-gradient"
+                     type="button"
+                     onClick={() => resumeInputRef.current && resumeInputRef.current.click()}
+                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Choose File
                     </Button>
