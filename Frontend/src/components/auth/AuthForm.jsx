@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../ui/button";
@@ -29,6 +30,8 @@ import {
   ArrowLeft,
   CheckCircle,
 } from "lucide-react";
+import logo from "../../assets/download.jpg";
+import { toast } from "react-toastify";
 
 export const AuthForm = () => {
   const { login, signup } = useAuth();
@@ -44,12 +47,13 @@ export const AuthForm = () => {
   });
 
   const [signupForm, setSignupForm] = useState({
-    fullName: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
     role: "employee",
     department: "",
+    avatar: "",
   });
 
   const [forgotForm, setForgotForm] = useState({
@@ -91,7 +95,17 @@ export const AuthForm = () => {
 
     setLoading(true);
     try {
-      await signup(signupForm);
+      const payload = {
+        name: signupForm.name,
+        email: signupForm.email,
+        role: signupForm.role,
+        department: signupForm.department,
+        avatar: signupForm.avatar || "",
+        password: signupForm.password,
+        confirmPassword: signupForm.confirmPassword,
+      };
+      await signup(payload);
+      // await signup(signupForm);
       navigate("/dashboard");
     } catch (error) {
       console.error("Signup error:", error);
@@ -100,55 +114,138 @@ export const AuthForm = () => {
     }
   };
 
-  const handleForgotEmail = (e) => {
+  // const handleForgotEmail = (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   // Simulate sending email
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     setMode("forgot-code");
+  //   }, 1000);
+  // };
+  const handleForgotEmail = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate sending email
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/forget-password", {
+        email: forgotForm.email,
+      });
+      toast.success(res.data.message);
       setMode("forgot-code");
-    }, 1000);
-  };
-
-  const handleCodeVerification = (e) => {
-    e.preventDefault();
-    if (otpCode === "123456") {
-      // Demo code
-      setMode("forgot-password");
-    } else {
-      alert("Invalid code. Use 123456 for demo.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePasswordReset = (e) => {
+
+  // const handleCodeVerification = (e) => {
+  //   e.preventDefault();
+  //   if (otpCode === "123456") {
+  //     // Demo code
+  //     setMode("forgot-password");
+  //   } else {
+  //     alert("Invalid code. Use 123456 for demo.");
+  //   }
+  // };
+  const [resetToken, setResetToken] = useState("");
+
+  // const handleCodeVerification = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.post("http://localhost:5000/auth/verify-otp", {
+  //       email: forgotForm.email,
+  //       otp: otpCode,
+  //     });
+  //     setResetToken(res.data.resetToken);
+  //     alert(res.data.message);
+  //     setMode("forgot-password");
+  //   } catch (err) {
+  //     alert(err.response?.data?.message || "Invalid or expired code");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const handleCodeVerification = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/verify-otp", {
+        email: forgotForm.email.trim(),
+        otp: otpCode.trim(),   // ✅ make sure OTP is a string without spaces
+      });
+      setResetToken(res.data.resetToken);
+      toast.success(res.data.message);
+      setMode("forgot-password");
+    } catch (err) {
+      toast.success(err.response?.data?.message || "Invalid or expired code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // const handlePasswordReset = (e) => {
+  //   e.preventDefault();
+  //   if (forgotForm.newPassword !== forgotForm.confirmPassword) {
+  //     toast.error("Passwords do not match");
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   // Simulate password reset
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     toast.success("Password reset successful!");
+  //     setMode("login");
+  //     setForgotForm({ email: "", newPassword: "", confirmPassword: "" });
+  //     setOtpCode("");
+  //   }, 1000);
+  // };
+
+  const handlePasswordReset = async (e) => {
     e.preventDefault();
     if (forgotForm.newPassword !== forgotForm.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     setLoading(true);
-    // Simulate password reset
-    setTimeout(() => {
-      setLoading(false);
-      alert("Password reset successful!");
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/reset-password", {
+        resetToken,
+        newPassword: forgotForm.newPassword,
+        confirmNewPassword: forgotForm.confirmPassword,
+      });
+      toast.success(res.data.message);
       setMode("login");
       setForgotForm({ email: "", newPassword: "", confirmPassword: "" });
       setOtpCode("");
-    }, 1000);
+      setResetToken("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-full sm:w-1/2 max-w-xl mx-auto">
+      <div className="w-3/4 sm:w-1/2 max-w-xl mx-auto"> 
         {" "}
         {/* Responsive: half screen on sm+, centered */}
         {/* Logo and Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
-            <Building2 className="w-8 h-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4 overflow-hidden">
+            {/* <Building2 className="w-8 h-8 text-primary" /> */}
+            <img
+              src={logo}
+              alt="GammoDA Logo"
+              className="w-16 h-16 object-cover"
+            />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">GammoDA</h1>
-          <p className="text-blue-100">Employee Management System</p>
+          <p className="text-blue-100">HR Management System</p>
         </div>
         <Card className="shadow-2xl border-0">
           <CardHeader className="text-center pb-4">
@@ -293,17 +390,6 @@ export const AuthForm = () => {
                     </button>
                   </p>
                 </div>
-
-                {/* Demo Credentials */}
-                <div className="mt-4 p-3 bg-accent rounded-lg">
-                  <p className="text-xs font-medium text-accent-foreground mb-1">
-                    Demo:
-                  </p>
-                  <div className="space-y-1 text-xs text-muted-foreground">
-                    <p>HR: hr@company.com / password</p>
-                    <p>Employee: employee@company.com / password</p>
-                  </div>
-                </div>
               </form>
             )}
 
@@ -319,11 +405,11 @@ export const AuthForm = () => {
                       type="text"
                       placeholder="Enter your full name"
                       className="pl-10"
-                      value={signupForm.fullName}
+                      value={signupForm.name}
                       onChange={(e) =>
                         setSignupForm((prev) => ({
                           ...prev,
-                          fullName: e.target.value,
+                          name: e.target.value,
                         }))
                       }
                       required
@@ -520,9 +606,9 @@ export const AuthForm = () => {
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
-                  <p className="text-xs text-center text-muted-foreground">
+                  {/* <p className="text-xs text-center text-muted-foreground">
                     Demo code: 123456
-                  </p>
+                  </p> */}
                 </div>
 
                 <Button
