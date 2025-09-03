@@ -47,28 +47,28 @@ const Dashboard = () => {
   const recentActivities = [
     {
       id: 1,
-      user: 'Sarah Johnson',
+      user: 'leul Gedion',
       action: 'submitted leave request',
       time: '2 hours ago',
       type: 'leave'
     },
     {
       id: 2,
-      user: 'Mike Chen',
+      user: 'Abebe Kebede',
       action: 'marked attendance',
       time: '3 hours ago',
       type: 'attendance'
     },
     {
       id: 3,
-      user: 'Emily Davis',
+      user: 'Habtumu Teshome',
       action: 'updated profile',
       time: '5 hours ago',
       type: 'profile'
     },
     {
       id: 4,
-      user: 'David Wilson',
+      user: 'Jossy Chencha',
       action: 'applied for Engineering role',
       time: '1 day ago',
       type: 'recruitment'

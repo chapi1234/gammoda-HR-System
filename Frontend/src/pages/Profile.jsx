@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -60,8 +60,14 @@ const Profile = () => {
     confirmPassword: "",
   });
 
-  const [resumeFile, setResumeFile] = useState(null);
+  // Get resume from localStorage if it exists
+  const [resumeFile, setResumeFile] = useState(() => {
+    const savedResume = localStorage.getItem("userResume");
+    return savedResume ? JSON.parse(savedResume) : null;
+  });
+
   const [profileImage, setProfileImage] = useState(null);
+  const resumeInputRef = useRef(null);
 
   const handleProfileUpdate = async () => {
     try {
@@ -101,17 +107,63 @@ const Profile = () => {
     }
   };
 
-
   const handleResumeUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
       if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-        setResumeFile(file);
-        toast.success("Resume uploaded successfully!");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Create a file info object to store
+          const fileInfo = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+            uploadDate: new Date().toISOString(),
+            data: e.target.result, // Store file as base64
+          };
+
+          // Store file info in localStorage
+          localStorage.setItem("userResume", JSON.stringify(fileInfo));
+
+          setResumeFile(fileInfo);
+          toast.success("Resume uploaded successfully!");
+        };
+        reader.readAsDataURL(file);
       } else {
         toast.error("Please upload a PDF file");
       }
     }
+  };
+
+  const handleViewResume = () => {
+    if (!resumeFile) {
+      toast.error("No resume uploaded");
+      return;
+    }
+
+    // Open the PDF in a new tab
+    const pdfWindow = window.open();
+    pdfWindow.document.write(`
+      <iframe width="100%" height="100%" src="${resumeFile.data}" frameborder="0"></iframe>
+    `);
+  };
+
+  const handleDownloadResume = () => {
+    if (!resumeFile) {
+      toast.error("No resume uploaded");
+      return;
+    }
+
+    // Create a download link
+    const downloadLink = document.createElement("a");
+    downloadLink.href = resumeFile.data;
+    downloadLink.download = resumeFile.name;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    toast.success("Resume downloaded successfully!");
   };
 
   const handleProfileImageUpload = (event) => {
@@ -156,7 +208,10 @@ const Profile = () => {
             <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
               <div className="relative flex justify-center items-center">
                 <Avatar>
-                  <AvatarImage className="w-100 h-150" src={profileImage || user?.avatar} alt={user?.name} />
+                  <AvatarImage
+                    src={profileImage || user?.avatar}
+                    alt={user?.name}
+                  />
                   <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                     {user?.name
                       ?.split(" ")
@@ -520,16 +575,15 @@ const Profile = () => {
                     onChange={handleResumeUpload}
                     className="hidden"
                     id="resume-upload"
+                    ref={resumeInputRef}
                   />
-                  <Label htmlFor="resume-upload" className="cursor-pointer">
-                    <Button className="btn-gradient"
-                     type="button"
-                     onClick={() => resumeInputRef.current && resumeInputRef.current.click()}
-                     >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose File
-                    </Button>
-                  </Label>
+                  <Button
+                    className="btn-gradient"
+                    onClick={() => resumeInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose File
+                  </Button>
                   {resumeFile && (
                     <p className="mt-2 text-sm text-muted-foreground">
                       Selected: {resumeFile.name}
@@ -541,29 +595,46 @@ const Profile = () => {
                 <div className="space-y-4">
                   <h4 className="font-semibold">Current Documents</h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                          <span className="text-red-600 font-semibold text-xs">
-                            PDF
-                          </span>
+                    {resumeFile ? (
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <span className="text-red-600 font-semibold text-xs">
+                              PDF
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium">{resumeFile.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Uploaded on{" "}
+                              {new Date(
+                                resumeFile.uploadDate
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">Resume_2024.pdf</p>
-                          <p className="text-sm text-muted-foreground">
-                            Uploaded on Jan 15, 2024
-                          </p>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleViewResume}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleDownloadResume}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-4">
+                        No resume uploaded yet
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>

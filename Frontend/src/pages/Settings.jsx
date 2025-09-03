@@ -97,7 +97,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="appearance" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="flex flex-wrap w-full gap-2 mb-6">
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
