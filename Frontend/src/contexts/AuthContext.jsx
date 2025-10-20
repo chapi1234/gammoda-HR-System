@@ -1,12 +1,13 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -17,9 +18,9 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check for existing auth on mount
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
-    
+    const token = localStorage.getItem("authToken");
+    const userData = localStorage.getItem("userData");
+
     if (token && userData) {
       setUser(JSON.parse(userData));
     }
@@ -28,82 +29,94 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, role) => {
     try {
-      // Simulate API call
-      const response = await new Promise((resolve) => {
-        setTimeout(() => {
-          const mockUser = {
-            id: Date.now(),
-            email,
-            role,
-            name: role === 'hr' ? 'HR Manager' : 'John Employee',
-            department: role === 'hr' ? 'Human Resources' : 'Engineering',
-            avatar: `https://ui-avatars.com/api/?name=${role === 'hr' ? 'HR+Manager' : 'John+Employee'}&background=3b82f6&color=fff`
-          };
-          
-          resolve({
-            user: mockUser,
-            token: 'mock-jwt-token-' + Date.now()
-          });
-        }, 1000);
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password,
+          role,
+        }
+      );
+      const data = response.data;
+      if (!data.status) throw new Error(data.message);
 
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('userData', JSON.stringify(response.user));
-      setUser(response.user);
-      
-      toast.success(`Welcome back, ${response.user.name}!`);
-      return response.user;
+      localStorage.setItem("authToken", data.data.token);
+      localStorage.setItem("userData", JSON.stringify(data.data.user));
+      setUser(data.data.user);
+
+      toast.success(`Welcome back, ${data.data.user.name}!`);
+      return data.data.user;
     } catch (error) {
-      toast.error('Login failed. Please try again.');
+      toast.error(
+        error.response?.data?.message || "Login failed. Please try again."
+      );
       throw error;
     }
   };
 
   const signup = async (formData) => {
     try {
-      // Simulate API call
-      const response = await new Promise((resolve) => {
-        setTimeout(() => {
-          const mockUser = {
-            id: Date.now(),
-            email: formData.email,
-            role: formData.role,
-            name: formData.fullName,
-            department: formData.department,
-            avatar: `https://ui-avatars.com/api/?name=${formData.fullName.replace(' ', '+')}&background=3b82f6&color=fff`
-          };
-          
-          resolve({
-            user: mockUser,
-            token: 'mock-jwt-token-' + Date.now()
-          });
-        }, 1500);
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        formData
+      );
+      const data = response.data;
+      if (!data.status) throw new Error(data.message);
 
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('userData', JSON.stringify(response.user));
-      setUser(response.user);
-      
-      toast.success('Account created successfully!');
-      return response.user;
+      localStorage.setItem("authToken", data.data.token);
+      localStorage.setItem("userData", JSON.stringify(data.data.user));
+      setUser(data.data.user);
+
+      toast.success("Account created successfully!");
+      return data.data.user;
     } catch (error) {
-      toast.error('Signup failed. Please try again.');
+      toast.error(
+        error.response?.data?.message || "Signup failed. Please try again."
+      );
       throw error;
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
     setUser(null);
-    toast.success('Logged out successfully');
+    toast.success("Logged out successfully");
   };
 
   const updateProfile = (updatedData) => {
     const updatedUser = { ...user, ...updatedData };
     setUser(updatedUser);
-    localStorage.setItem('userData', JSON.stringify(updatedUser));
-    toast.success('Profile updated successfully');
+    localStorage.setItem("userData", JSON.stringify(updatedUser));
+    toast.success("Profile updated successfully");
+  };
+
+  const changePassword = async (oldPassword, newPassword, confirmPassword) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!user || !token) throw new Error("Not authenticated");
+
+      const response = await axios.put(
+        `http://localhost:5000/api/auth/change-password/${user._id}`,
+        { oldPassword, newPassword, confirmPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // if backend middleware checks JWT
+          },
+        }
+      );
+
+      const data = response.data;
+      if (!data.status) throw new Error(data.message);
+
+      toast.success(data.message || "Password changed successfully");
+      return true;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Password change failed. Please try again."
+      );
+      throw error;
+    }
   };
 
   const value = {
@@ -112,15 +125,12 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     updateProfile,
+    changePassword,
     loading,
     isAuthenticated: !!user,
-    isHR: user?.role === 'hr',
-    isEmployee: user?.role === 'employee'
+    isHR: user?.role === "hr",
+    isEmployee: user?.role === "employee",
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
