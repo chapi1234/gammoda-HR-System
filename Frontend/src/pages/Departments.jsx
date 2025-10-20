@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import axios from 'axios';
 import {
   Building2, Plus, Edit, Trash2, Users, DollarSign, 
   TrendingUp, Search, MoreHorizontal
@@ -20,68 +21,7 @@ const Departments = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
 
-  const [departments, setDepartments] = useState([
-    {
-      id: 1,
-      name: 'Engineering',
-      description: 'Software development and technical operations',
-      head: 'Leul Gedion',
-      headAvatar: 'https://ui-avatars.com/api/?name=Leul+Gedion&background=3b82f6&color=fff',
-      employeeCount: 45,
-      averageSalary: 95000,
-      budget: 4275000,
-      location: 'Building A, Floor 3',
-      established: '2020-01-15'
-    },
-    {
-      id: 2,
-      name: 'Marketing',
-      description: 'Brand management, digital marketing, and customer acquisition',
-      head: 'Mikiyas Hailegebriel',
-      headAvatar: 'https://ui-avatars.com/api/?name=Mike+Hen&background=10b981&color=fff',
-      employeeCount: 25,
-      averageSalary: 75000,
-      budget: 1875000,
-      location: 'Building B, Floor 2',
-      established: '2020-03-20'
-    },
-    {
-      id: 3,
-      name: 'Sales',
-      description: 'Revenue generation and client relationship management',
-      head: 'Matthias Mulugeta',
-      headAvatar: 'https://ui-avatars.com/api/?name=Matthias+Mulugeta&background=f59e0b&color=fff',
-      employeeCount: 30,
-      averageSalary: 68000,
-      budget: 2040000,
-      location: 'Building A, Floor 1',
-      established: '2020-02-01'
-    },
-    {
-      id: 4,
-      name: 'Human Resources',
-      description: 'Employee relations, recruitment, and organizational development',
-      head: 'Asfaw Awoke',
-      headAvatar: 'https://ui-avatars.com/api/?name=Asfaw+Awoke&background=ef4444&color=fff',
-      employeeCount: 12,
-      averageSalary: 72000,
-      budget: 864000,
-      location: 'Building A, Floor 2',
-      established: '2020-01-10'
-    },
-    {
-      id: 5,
-      name: 'Finance',
-      description: 'Financial planning, accounting, and budget management',
-      head: 'Martha Teshome',
-      headAvatar: 'https://ui-avatars.com/api/?name=Martha+Teshome&background=8b5cf6&color=fff',
-      employeeCount: 18,
-      averageSalary: 82000,
-      budget: 1476000,
-      location: 'Building B, Floor 3',
-      established: '2020-01-20'
-    }
-  ]);
+  const [departments, setDepartments] = useState([]);
 
   const [newDepartment, setNewDepartment] = useState({
     name: '',
@@ -91,50 +31,94 @@ const Departments = () => {
     budget: ''
   });
 
+  const API_BASE = 'http://localhost:5000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/departments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartments(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load departments');
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filteredDepartments = departments.filter(dept =>
     dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     dept.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     dept.head.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddDepartment = () => {
+  const handleAddDepartment = async () => {
     if (!newDepartment.name || !newDepartment.description) {
       toast.error('Please fill in all required fields');
       return;
     }
-
-    const department = {
-      ...newDepartment,
-      id: departments.length + 1,
-      headAvatar: `https://ui-avatars.com/api/?name=${newDepartment.head.replace(' ', '+')}&background=3b82f6&color=fff`,
-      employeeCount: 0,
-      averageSalary: 0,
-      budget: parseInt(newDepartment.budget) || 0,
-      established: new Date().toISOString().split('T')[0]
-    };
-
-    setDepartments([...departments, department]);
-    setNewDepartment({ name: '', description: '', head: '', location: '', budget: '' });
-    setShowAddDialog(false);
-    toast.success('Department added successfully!');
+    try {
+      const payload = {
+        ...newDepartment,
+        budget: newDepartment.budget ? Number(newDepartment.budget) : 0,
+      };
+      const res = await axios.post(`${API_BASE}/api/departments`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const created = res.data?.data;
+      if (!created) throw new Error('No department returned');
+      setDepartments(prev => [...prev, created]);
+      setNewDepartment({ name: '', description: '', head: '', location: '', budget: '' });
+      setShowAddDialog(false);
+      toast.success('Department added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to add department');
+    }
   };
 
-  const handleUpdateDepartment = () => {
+  const handleUpdateDepartment = async () => {
     if (!editingDepartment.name || !editingDepartment.description) {
       toast.error('Please fill in all required fields');
       return;
     }
-
-    setDepartments(departments.map(dept => 
-      dept.id === editingDepartment.id ? editingDepartment : dept
-    ));
-    setEditingDepartment(null);
-    toast.success('Department updated successfully!');
+    try {
+      const payload = {
+        ...editingDepartment,
+        budget: editingDepartment.budget ? Number(editingDepartment.budget) : 0,
+      };
+      const res = await axios.put(`${API_BASE}/api/departments/${editingDepartment.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updated = res.data?.data;
+      if (!updated) throw new Error('No department returned');
+      setDepartments(prev => prev.map(d => d.id === updated.id ? updated : d));
+      setEditingDepartment(null);
+      toast.success('Department updated successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update department');
+    }
   };
 
-  const handleDeleteDepartment = (id) => {
-    setDepartments(departments.filter(dept => dept.id !== id));
-    toast.success('Department deleted successfully!');
+  const handleDeleteDepartment = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this department?')) return;
+    try {
+      await axios.delete(`${API_BASE}/api/departments/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartments(prev => prev.filter(dept => dept.id !== id));
+      toast.success('Department deleted successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to delete department');
+    }
   };
 
   const totalEmployees = departments.reduce((sum, dept) => sum + dept.employeeCount, 0);
