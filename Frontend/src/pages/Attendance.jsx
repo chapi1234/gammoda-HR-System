@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -18,6 +18,7 @@ import {
   Filter, Download, TrendingUp, CheckCircle, XCircle, AlertCircle
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Attendance = () => {
   const { user, isHR } = useAuth();
@@ -25,84 +26,75 @@ const Attendance = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('today'); // 'today', 'week', 'month'
+  const API_BASE = 'http://localhost:5000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
-  // Mock attendance data
-  const [attendanceRecords] = useState([
-    {
-      id: 1,
-      employeeId: 'EMP001',
-      employeeName: 'Metasebiyaw Asfaw',
-      avatar: 'https://ui-avatars.com/api/?name=Metasebiyaw+Asfaw&background=3b82f6&color=fff',
-      department: 'Engineering',
-      date: '2024-01-08',
-      checkIn: '09:15',
-      checkOut: '18:30',
-      workingHours: '9h 15m',
-      status: 'present',
-      location: 'Office'
-    },
-    {
-      id: 2,
-      employeeId: 'EMP002',
-      employeeName: 'Michael Hayelom',
-      avatar: 'https://ui-avatars.com/api/?name=Michael+Hayelom&background=10b981&color=fff',
-      department: 'Marketing',
-      date: '2024-01-08',
-      checkIn: '08:45',
-      checkOut: '17:45',
-      workingHours: '9h 00m',
-      status: 'present',
-      location: 'Remote'
-    },
-    {
-      id: 3,
-      employeeId: 'EMP003',
-      employeeName: 'Leul Gedion',
-      avatar: 'https://ui-avatars.com/api/?name=Leul+Gedion&background=f59e0b&color=fff',
-      department: 'Sales',
-      date: '2024-01-08',
-      checkIn: null,
-      checkOut: null,
-      workingHours: '0h 00m',
-      status: 'absent',
-      location: null
-    },
-    {
-      id: 4,
-      employeeId: 'EMP004',
-      employeeName: 'Dawit Asfaw',
-      avatar: 'https://ui-avatars.com/api/?name=Dawit+Asfaw&background=8b5cf6&color=fff',
-      department: 'Engineering',
-      date: '2024-01-08',
-      checkIn: '10:30',
-      checkOut: null,
-      workingHours: '7h 30m',
-      status: 'late',
-      location: 'Office'
-    },
-    {
-      id: 5,
-      employeeId: 'EMP005',
-      employeeName: 'Sara Kebede',
-      avatar: 'https://ui-avatars.com/api/?name=Sara+Kebede&background=ef4444&color=fff',
-      department: 'HR',
-      date: '2024-01-08',
-      checkIn: null,
-      checkOut: null,
-      workingHours: '0h 00m',
-      status: 'leave',
-      location: null
+  const [attendanceRecords, setAttendanceRecords] = useState([]); // HR date-based list
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [userAttendance, setUserAttendance] = useState([]); // Employee history
+  const [loading, setLoading] = useState(false);
+
+  const isoDate = (d) => {
+    const dd = new Date(d);
+    return new Date(dd.getTime() - dd.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  };
+
+  const fetchByDate = async (dateObj) => {
+    if (!token || !isHR) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}/api/attendance`, {
+        params: { date: isoDate(dateObj) },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  setAttendanceRecords(Array.isArray(res.data?.data) ? res.data.data : []);
+  setAttendanceStats(res.data?.stats || null);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load attendance');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  const [userAttendance] = useState([
-    { date: '2024-01-01', status: 'present', checkIn: '09:00', checkOut: '18:00', hours: '9h 00m' },
-    { date: '2024-01-02', status: 'present', checkIn: '09:15', checkOut: '18:30', hours: '9h 15m' },
-    { date: '2024-01-03', status: 'present', checkIn: '08:45', checkOut: '17:45', hours: '9h 00m' },
-    { date: '2024-01-04', status: 'late', checkIn: '10:30', checkOut: '18:30', hours: '8h 00m' },
-    { date: '2024-01-05', status: 'present', checkIn: '09:00', checkOut: '18:00', hours: '9h 00m' },
-    { date: '2024-01-08', status: 'present', checkIn: '09:15', checkOut: null, hours: '8h 45m (ongoing)' }
-  ]);
+  const fetchMyHistory = async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API_BASE}/api/attendance/me`, {
+        params: { limit: 30 },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUserAttendance(Array.isArray(res.data?.data) ? res.data.data : []);
+    } catch (err) {
+      console.error(err);
+      // non-blocking
+    }
+  };
+
+  const refreshStats = async (dateObj) => {
+    // Only HR needs org-wide stats
+    if (!token || !isHR) return;
+    try {
+      const res = await axios.get(`${API_BASE}/api/attendance/stats`, {
+        params: { date: isoDate(dateObj || selectedDate) },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data?.stats) setAttendanceStats(res.data.stats);
+    } catch (err) {
+      // non-blocking
+    }
+  };
+
+  useEffect(() => {
+    if (isHR) fetchByDate(selectedDate);
+    fetchMyHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHR, token]);
+
+  useEffect(() => {
+    if (isHR) fetchByDate(selectedDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
 
   const filteredRecords = attendanceRecords.filter(record => {
     const matchesSearch = record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -147,19 +139,158 @@ const Attendance = () => {
     }
   };
 
-  const handleMarkAttendance = () => {
-    toast.success('Attendance marked successfully!');
+  const handleMarkAttendance = async () => {
+    try {
+      await axios.post(`${API_BASE}/api/attendance/check-in`, { location: 'Office' }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Attendance marked successfully!');
+      fetchMyHistory();
+      if (isHR) {
+        fetchByDate(selectedDate);
+        await refreshStats(selectedDate);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to mark attendance');
+    }
   };
 
-  const todayStats = {
-    present: attendanceRecords.filter(r => r.status === 'present').length,
-    absent: attendanceRecords.filter(r => r.status === 'absent').length,
-    late: attendanceRecords.filter(r => r.status === 'late').length,
-    leave: attendanceRecords.filter(r => r.status === 'leave').length,
-    total: attendanceRecords.length
+  const handleCheckOut = async () => {
+    try {
+      await axios.post(`${API_BASE}/api/attendance/check-out`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Checked out successfully!');
+      fetchMyHistory();
+      if (isHR) {
+        fetchByDate(selectedDate);
+        await refreshStats(selectedDate);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to check out');
+    }
   };
+
+  // Personal today's status for non-HR user
+  const myTodayStatus = useMemo(() => {
+    const todayStr = isoDate(selectedDate);
+    const rec = userAttendance.find(r => r.date === todayStr);
+    return rec?.status || 'absent';
+  }, [userAttendance, selectedDate]);
+
+  const todayStats = useMemo(() => {
+    if (isHR) {
+      return (
+        attendanceStats || {
+          present: attendanceRecords.filter(r => r.status === 'present').length,
+          absent: attendanceRecords.filter(r => r.status === 'absent').length,
+          late: attendanceRecords.filter(r => r.status === 'late').length,
+          leave: attendanceRecords.filter(r => r.status === 'leave').length,
+          total: attendanceRecords.length
+        }
+      );
+    }
+    return {
+      present: myTodayStatus === 'present' ? 1 : 0,
+      late: myTodayStatus === 'late' ? 1 : 0,
+      leave: myTodayStatus === 'leave' ? 1 : 0,
+      absent: myTodayStatus === 'absent' ? 1 : 0,
+      total: 1
+    };
+  }, [isHR, attendanceStats, attendanceRecords, myTodayStatus]);
 
   const attendanceRate = ((todayStats.present + todayStats.late) / todayStats.total * 100).toFixed(1);
+
+  // --- Weekly summary for Employee view ---
+  const getWeekBounds = (d) => {
+    const date = new Date(d);
+    const day = date.getDay(); // 0=Sun,1=Mon,...
+    const diffToMonday = (day + 6) % 7; // days since Monday
+    const start = new Date(date);
+    start.setDate(date.getDate() - diffToMonday);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  };
+
+  const parseWorkingMinutes = (s) => {
+    if (!s || typeof s !== 'string') return 0;
+    const m = s.match(/(\d+)h\s+(\d{1,2})m/);
+    if (!m) return 0;
+    const h = parseInt(m[1], 10);
+    const mm = parseInt(m[2], 10);
+    return (isNaN(h) || isNaN(mm)) ? 0 : (h * 60 + mm);
+  };
+
+  const minutesToHoursStr = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}h ${String(m).padStart(2, '0')}m`;
+  };
+
+  const minutesTo12h = (mins) => {
+    if (mins === null || mins === undefined) return '--';
+    let h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    let hour12 = h % 12;
+    if (hour12 === 0) hour12 = 12;
+    return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+  };
+
+  const weekly = useMemo(() => {
+    // Current week (Mon-Sun), capped at today
+    const today = new Date();
+    const { start, end } = getWeekBounds(today);
+    const capEnd = new Date(Math.min(end.getTime(), today.getTime()));
+    capEnd.setHours(23, 59, 59, 999);
+
+    // Eligible working days: Mon-Fri up to capEnd
+    let totalDays = 0;
+    {
+      const iter = new Date(start);
+      while (iter <= capEnd) {
+        const wd = iter.getDay();
+        if (wd >= 1 && wd <= 5) totalDays += 1; // Mon-Fri
+        iter.setDate(iter.getDate() + 1);
+      }
+    }
+
+    // Filter my records within week bounds
+    const weekRecords = userAttendance.filter(r => {
+      const d = new Date(r.date);
+      return d >= start && d <= capEnd;
+    });
+
+    const daysPresent = weekRecords.filter(r => r.status === 'present' || r.status === 'late').length;
+    const totalMinutes = weekRecords.reduce((acc, r) => acc + parseWorkingMinutes(r.workingHours || r.hours), 0);
+
+    // Average check-in (over records that have checkIn)
+    const checkIns = weekRecords
+      .map(r => r.checkIn)
+      .filter(Boolean)
+      .map(t => {
+        const [hh, mm] = String(t).split(':').map(Number);
+        if (isNaN(hh) || isNaN(mm)) return null;
+        return hh * 60 + mm;
+      })
+      .filter(v => v !== null);
+    const avgCheckInMins = checkIns.length ? Math.round(checkIns.reduce((a, b) => a + b, 0) / checkIns.length) : null;
+
+    const attendanceRate = totalDays > 0 ? Math.round((daysPresent / totalDays) * 100) : 0;
+
+    return {
+      daysPresent,
+      totalDays,
+      totalHours: minutesToHoursStr(totalMinutes),
+      avgCheckIn: minutesTo12h(avgCheckInMins),
+      attendanceRate,
+    };
+  }, [userAttendance]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -323,7 +454,14 @@ const Attendance = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((record) => (
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={7}>
+                        <p className="text-sm text-muted-foreground">Loading attendance…</p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!loading && filteredRecords.map((record) => (
                     <TableRow key={record.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
@@ -395,21 +533,27 @@ const Attendance = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Check In</p>
-                    <p className="text-2xl font-bold text-success">09:15</p>
+                    <p className="text-2xl font-bold text-success">{
+                      (userAttendance.find(r => r.date === isoDate(new Date()))?.checkIn) || '--'
+                    }</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Working Hours</p>
-                    <p className="text-2xl font-bold text-primary">8h 45m</p>
+                    <p className="text-2xl font-bold text-primary">{
+                      (userAttendance.find(r => r.date === isoDate(new Date()))?.workingHours) || '0h 00m'
+                    }</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-success/10 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="w-5 h-5 text-success" />
-                    <span className="font-medium">Present</span>
+                    <span className="font-medium">{
+                      (userAttendance.find(r => r.date === isoDate(new Date()))?.status || 'Present')
+                    }</span>
                   </div>
                   <Badge variant="outline">Office</Badge>
                 </div>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={handleCheckOut}>
                   <Clock className="w-4 h-4 mr-2" />
                   Check Out
                 </Button>
@@ -427,19 +571,19 @@ const Attendance = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Days Present</p>
-                    <p className="text-2xl font-bold">4/5</p>
+                    <p className="text-2xl font-bold">{weekly.daysPresent}/{weekly.totalDays}</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Total Hours</p>
-                    <p className="text-2xl font-bold">35h 45m</p>
+                    <p className="text-2xl font-bold">{weekly.totalHours}</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Avg. Check-in</p>
-                    <p className="text-lg font-semibold">9:11 AM</p>
+                    <p className="text-lg font-semibold">{weekly.avgCheckIn}</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Attendance Rate</p>
-                    <p className="text-lg font-semibold text-success">96%</p>
+                    <p className="text-lg font-semibold text-success">{weekly.attendanceRate}%</p>
                   </div>
                 </div>
               </CardContent>
@@ -492,7 +636,7 @@ const Attendance = () => {
                           record.status === 'late' ? "text-warning" :
                           "text-muted-foreground"
                         )}>
-                          {record.hours}
+                          {record.workingHours || record.hours}
                         </span>
                       </TableCell>
                       <TableCell>{getStatusBadge(record.status)}</TableCell>
