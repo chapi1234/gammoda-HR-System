@@ -1,7 +1,13 @@
+import mongoose from 'mongoose'
 const departmentSchema = new mongoose.Schema({
   name: String,
   description: String,
-  parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' }
+  head: { type: String },
+  location: { type: String },
+  budget: { type: Number, default: 0 },
+  employeeCount: { type: Number, default: 0 },
+  averageSalary: { type: Number, default: 0 },
+  established: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Department", departmentSchema);
+export default mongoose.model("Department", departmentSchema);
