@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -16,6 +16,7 @@ import {
   TrendingUp, TrendingDown, Building2, Users
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 const Salary = () => {
@@ -24,66 +25,50 @@ const Salary = () => {
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  // Mock salary data - HR sees all, employees see only their own
-  const allSalaries = [
-    {
-      id: 1,
-      employeeId: 'EMP001',
-      employeeName: 'Sarah Johnson',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      baseSalary: 85000,
-      bonus: 5000,
-      deductions: 8500,
-      netSalary: 81500,
-      payDate: '2024-01-31',
-      status: 'paid'
-    },
-    {
-      id: 2,
-      employeeId: 'EMP002',
-      employeeName: 'Michael Chen',
-      department: 'Marketing',
-      position: 'Marketing Manager',
-      baseSalary: 75000,
-      bonus: 3000,
-      deductions: 7200,
-      netSalary: 70800,
-      payDate: '2024-01-31',
-      status: 'paid'
-    },
-    {
-      id: 3,
-      employeeId: 'EMP003',
-      employeeName: 'Emily Rodriguez',
-      department: 'Sales',
-      position: 'Sales Executive',
-      baseSalary: 65000,
-      bonus: 8000,
-      deductions: 6500,
-      netSalary: 66500,
-      payDate: '2024-01-31',
-      status: 'pending'
-    },
-    {
-      id: 4,
-      employeeId: user?.employeeId || 'EMP004',
-      employeeName: user?.name || 'Current User',
-      department: user?.department || 'Engineering',
-      position: user?.position || 'Developer',
-      baseSalary: 70000,
-      bonus: 4000,
-      deductions: 7000,
-      netSalary: 67000,
-      payDate: '2024-01-31',
-      status: 'paid'
-    }
-  ];
+  const [salaries, setSalaries] = useState([]);
+  const [employees, setEmployees] = useState([]);
 
-  // Filter salaries based on user role
-  const [salaries, setSalaries] = useState(
-    isHR ? allSalaries : allSalaries.filter(salary => salary.employeeId === (user?.employeeId || 'EMP004'))
-  );
+  useEffect(() => {
+    const fetchPayrolls = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const apiBase = 'http://localhost:5000';
+        const res = await axios.get(`${apiBase}/api/payroll/`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.data) {
+          const mapped = res.data.data.map(p => ({
+            id: p._id,
+            employeeId: p.employeeId,
+            employeeName: p.employeeName || p.employee?.name || 'Unknown',
+            department: p.department || p.employee?.department || '',
+            position: p.position || p.employee?.position || '',
+            baseSalary: p.baseSalary,
+            bonus: p.bonus,
+            deductions: p.deductions,
+            netSalary: p.netSalary,
+            payDate: p.payDate ? new Date(p.payDate).toISOString().split('T')[0] : '',
+            status: p.status || 'pending'
+          }));
+          setSalaries(mapped);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load payrolls');
+      }
+    };
+    fetchPayrolls();
+    // also fetch employees for HR select
+    const fetchEmployees = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const apiBase = 'http://localhost:5000';
+        const res = await axios.get(`${apiBase}/api/employees`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.data) setEmployees(res.data.data);
+      } catch (err) {
+        console.error('Failed to fetch employees', err);
+      }
+    };
+    fetchEmployees();
+  }, [isHR]);
 
   const [newSalary, setNewSalary] = useState({
     employeeId: '',
@@ -114,34 +99,49 @@ const Salary = () => {
     return matchesSearch && matchesDepartment;
   });
 
-  const handleAddSalary = () => {
+  const handleAddSalary = async () => {
     if (!newSalary.employeeId || !newSalary.baseSalary) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    const netSalary = parseInt(newSalary.baseSalary) + parseInt(newSalary.bonus || 0) - parseInt(newSalary.deductions || 0);
-    
-    const salary = {
-      ...newSalary,
-      id: salaries.length + 1,
-      employeeName: `Employee ${salaries.length + 1}`,
-      department: 'Engineering',
-      position: 'Developer',
-      baseSalary: parseInt(newSalary.baseSalary),
-      bonus: parseInt(newSalary.bonus || 0),
-      deductions: parseInt(newSalary.deductions || 0),
-      netSalary,
-      status: 'pending'
-    };
-
-    setSalaries([...salaries, salary]);
-    setNewSalary({
-      employeeId: '', baseSalary: '', bonus: '', deductions: '',
-      payDate: new Date().toISOString().split('T')[0]
-    });
-    setShowAddDialog(false);
-    toast.success('Salary record added successfully!');
+    try {
+      const token = localStorage.getItem('authToken');
+      // send employee as MongoDB _id in body
+      const payload = {
+        employee: newSalary.employeeId,
+        baseSalary: Number(newSalary.baseSalary),
+        bonus: Number(newSalary.bonus || 0),
+        deductions: Number(newSalary.deductions || 0),
+        payDate: newSalary.payDate
+      };
+      const res = await axios.post(`http://localhost:5000/api/payroll`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data && res.data.data) {
+        const p = res.data.data;
+        const mapped = {
+          id: p._id,
+          employeeId: p.employeeId,
+          employeeName: p.employeeName || p.employee?.name || 'Unknown',
+          department: p.department || p.employee?.department || '',
+          position: p.position || p.employee?.position || '',
+          baseSalary: p.baseSalary,
+          bonus: p.bonus,
+          deductions: p.deductions,
+          netSalary: p.netSalary,
+          payDate: p.payDate ? new Date(p.payDate).toISOString().split('T')[0] : '',
+          status: p.status || 'pending'
+        };
+        setSalaries([mapped, ...salaries]);
+        setNewSalary({ employeeId: '', baseSalary: '', bonus: '', deductions: '', payDate: new Date().toISOString().split('T')[0] });
+        setShowAddDialog(false);
+        toast.success('Salary record added successfully!');
+      } else {
+        toast.error('Failed to create payroll');
+      }
+    } catch (err) {
+      console.error('Error creating payroll', err);
+      toast.error(err.response?.data?.message || 'Error creating payroll');
+    }
   };
 
   const handleEditSalary = (salary) => {
@@ -154,31 +154,68 @@ const Salary = () => {
   };
 
   const handleUpdateSalary = () => {
-    if (!editingSalary.baseSalary) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    const netSalary = parseInt(editingSalary.baseSalary) + parseInt(editingSalary.bonus || 0) - parseInt(editingSalary.deductions || 0);
-    
-    const updatedSalary = {
-      ...editingSalary,
-      baseSalary: parseInt(editingSalary.baseSalary),
-      bonus: parseInt(editingSalary.bonus || 0),
-      deductions: parseInt(editingSalary.deductions || 0),
-      netSalary
-    };
-
-    setSalaries(salaries.map(salary => 
-      salary.id === editingSalary.id ? updatedSalary : salary
-    ));
-    setEditingSalary(null);
-    toast.success('Salary record updated successfully!');
+    // Call backend to update payroll
+    (async () => {
+      if (!editingSalary.baseSalary) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      try {
+        const apiBase = 'http://localhost:5000';
+        const token = localStorage.getItem('authToken');
+        const payload = {
+          baseSalary: Number(editingSalary.baseSalary),
+          bonus: Number(editingSalary.bonus || 0),
+          deductions: Number(editingSalary.deductions || 0),
+          payDate: editingSalary.payDate
+        };
+        const res = await axios.patch(`${apiBase}/api/payroll/${editingSalary.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.data) {
+          const p = res.data.data;
+          const updated = {
+            id: p._id,
+            employeeId: p.employeeId,
+            employeeName: p.employeeName || p.employee?.name || 'Unknown',
+            department: p.department || p.employee?.department || '',
+            position: p.position || p.employee?.position || '',
+            baseSalary: p.baseSalary,
+            bonus: p.bonus,
+            deductions: p.deductions,
+            netSalary: p.netSalary,
+            payDate: p.payDate ? new Date(p.payDate).toISOString().split('T')[0] : '',
+            status: p.status || 'pending'
+          };
+          setSalaries(salaries.map(s => s.id === updated.id ? updated : s));
+          setEditingSalary(null);
+          toast.success('Salary record updated successfully!');
+        } else {
+          toast.error('Failed to update payroll');
+        }
+      } catch (err) {
+        console.error('Error updating payroll', err);
+        toast.error(err.response?.data?.message || 'Error updating payroll');
+      }
+    })();
   };
 
   const handleDeleteSalary = (id) => {
-    setSalaries(salaries.filter(salary => salary.id !== id));
-    toast.success('Salary record deleted successfully!');
+    // Call backend to delete payroll and update UI
+    (async () => {
+      try {
+        const apiBase = 'http://localhost:5000';
+        const token = localStorage.getItem('authToken');
+        const res = await axios.delete(`${apiBase}/api/payroll/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.status) {
+          setSalaries(salaries.filter(salary => salary.id !== id));
+          toast.success('Salary record deleted successfully!');
+        } else {
+          toast.error('Failed to delete payroll');
+        }
+      } catch (err) {
+        console.error('Error deleting payroll', err);
+        toast.error(err.response?.data?.message || 'Error deleting payroll');
+      }
+    })();
   };
 
   const getStatusBadge = (status) => {
@@ -213,20 +250,26 @@ const Salary = () => {
                 Add Salary Record
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
               <DialogHeader>
                 <DialogTitle>Add Salary Record</DialogTitle>
                 <DialogDescription>Create a new salary record for an employee</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="employeeId">Employee ID</Label>
-                  <Input
-                    id="employeeId"
-                    placeholder="EMP001"
-                    value={newSalary.employeeId}
-                    onChange={(e) => setNewSalary({ ...newSalary, employeeId: e.target.value })}
-                  />
+                  <Label htmlFor="employeeId">Employee</Label>
+                  <Select value={newSalary.employeeId} onValueChange={(val) => setNewSalary({ ...newSalary, employeeId: val })}>
+                    <SelectTrigger id="employeeId" className="w-full">
+                      <SelectValue placeholder="Select employee..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map(emp => (
+                        <SelectItem key={emp.id} value={String(emp.id)}>
+                          {emp.name} — {emp.employeeId || ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="baseSalary">Base Salary</Label>
@@ -445,7 +488,7 @@ const Salary = () => {
 
       {/* Edit Salary Dialog */}
       <Dialog open={!!editingSalary} onOpenChange={(open) => !open && setEditingSalary(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
           <DialogHeader>
             <DialogTitle>Edit Salary Record</DialogTitle>
             <DialogDescription>Update salary information for this employee</DialogDescription>
