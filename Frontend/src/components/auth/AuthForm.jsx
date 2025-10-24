@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -62,16 +62,30 @@ export const AuthForm = () => {
     confirmPassword: "",
   });
 
-  const departments = [
-    "Engineering",
-    "Marketing",
-    "Sales",
-    "Human Resources",
-    "Finance",
-    "Operations",
-    "Customer Support",
-    "Product",
-  ];
+  const [departments, setDepartments] = useState([]); // [{id,name}]
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const API_BASE = 'http://localhost:5000';
+
+  const fetchDepartments = async () => {
+    setLoadingDepartments(true);
+    try {
+  const res = await axios.get(`${API_BASE}/api/departments/public-list`);
+  const list = (res.data?.data || []).filter(d => !!d?.name && !!d?._id || !!d?.id);
+  // normalize id
+  const normalized = list.map(d => ({ id: d.id || d._id, name: d.name }));
+  setDepartments(normalized);
+    } catch (err) {
+      console.error(err);
+      // non-blocking: fallback to empty list
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -99,7 +113,8 @@ export const AuthForm = () => {
         name: signupForm.name,
         email: signupForm.email,
         role: signupForm.role,
-        department: signupForm.department,
+  // Send departmentId for backend to store as ObjectId
+  departmentId: signupForm.department,
         avatar: signupForm.avatar || "",
         password: signupForm.password,
         confirmPassword: signupForm.confirmPassword,
@@ -139,35 +154,8 @@ export const AuthForm = () => {
     }
   };
 
-
-  // const handleCodeVerification = (e) => {
-  //   e.preventDefault();
-  //   if (otpCode === "123456") {
-  //     // Demo code
-  //     setMode("forgot-password");
-  //   } else {
-  //     alert("Invalid code. Use 123456 for demo.");
-  //   }
-  // };
   const [resetToken, setResetToken] = useState("");
 
-  // const handleCodeVerification = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   try {
-  //     const res = await axios.post("http://localhost:5000/auth/verify-otp", {
-  //       email: forgotForm.email,
-  //       otp: otpCode,
-  //     });
-  //     setResetToken(res.data.resetToken);
-  //     alert(res.data.message);
-  //     setMode("forgot-password");
-  //   } catch (err) {
-  //     alert(err.response?.data?.message || "Invalid or expired code");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleCodeVerification = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -185,23 +173,6 @@ export const AuthForm = () => {
       setLoading(false);
     }
   };
-
-  // const handlePasswordReset = (e) => {
-  //   e.preventDefault();
-  //   if (forgotForm.newPassword !== forgotForm.confirmPassword) {
-  //     toast.error("Passwords do not match");
-  //     return;
-  //   }
-  //   setLoading(true);
-  //   // Simulate password reset
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     toast.success("Password reset successful!");
-  //     setMode("login");
-  //     setForgotForm({ email: "", newPassword: "", confirmPassword: "" });
-  //     setOtpCode("");
-  //   }, 1000);
-  // };
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
@@ -469,12 +440,12 @@ export const AuthForm = () => {
                       }
                     >
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder={loadingDepartments ? "Loading..." : (departments.length ? "Select..." : "No departments") } />
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>
-                            {dept}
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

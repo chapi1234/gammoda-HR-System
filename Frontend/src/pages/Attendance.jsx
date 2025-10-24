@@ -292,6 +292,19 @@ const Attendance = () => {
     };
   }, [userAttendance]);
 
+  // Helpers for button states (today)
+  const todayStr = isoDate(new Date());
+  const todayRec = useMemo(() => userAttendance.find(r => r.date === todayStr), [userAttendance, todayStr]);
+
+  // Track if checked out today for button color
+  const [checkedOutToday, setCheckedOutToday] = useState(false);
+  useEffect(() => {
+    setCheckedOutToday(!!(todayRec && todayRec.checkOut));
+  }, [todayRec]);
+
+  const canCheckIn = !todayRec || !todayRec.checkIn;
+  const canCheckOut = !!(todayRec && todayRec.checkIn && !todayRec.checkOut);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -304,8 +317,24 @@ const Attendance = () => {
             {isHR ? 'Monitor and manage employee attendance' : 'Track your attendance and working hours'}
           </p>
         </div>
-        {!isHR && (
-          <Button onClick={handleMarkAttendance} className="btn-gradient">
+        {isHR ? (
+          <div className="flex gap-2">
+            <Button onClick={handleMarkAttendance} className="btn-gradient" disabled={!canCheckIn} title={canCheckIn ? 'Mark my check-in' : 'Already checked in today'}>
+              <Clock className="w-4 h-4 mr-2" />
+              My Check-in
+            </Button>
+            <Button
+              onClick={handleCheckOut}
+              className={checkedOutToday ? 'btn-gradient' : 'btn-outline'}
+              disabled={!canCheckOut}
+              title={canCheckOut ? 'Mark my check-out' : 'Check-in first or already checked out'}
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              My Check-out
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={handleMarkAttendance} className="btn-gradient" disabled={!canCheckIn} title={canCheckIn ? 'Mark your check-in' : 'You already checked in today'}>
             <Clock className="w-4 h-4 mr-2" />
             Mark Attendance
           </Button>
@@ -553,7 +582,11 @@ const Attendance = () => {
                   </div>
                   <Badge variant="outline">Office</Badge>
                 </div>
-                <Button variant="outline" className="w-full" onClick={handleCheckOut}>
+                <Button
+                  className={checkedOutToday ? 'btn-gradient w-full' : 'btn-outline w-full'}
+                  onClick={handleCheckOut}
+                  disabled={!canCheckOut}
+                >
                   <Clock className="w-4 h-4 mr-2" />
                   Check Out
                 </Button>
