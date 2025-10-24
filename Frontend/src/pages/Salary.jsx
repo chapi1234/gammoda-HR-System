@@ -68,6 +68,22 @@ const Salary = () => {
       }
     };
     fetchEmployees();
+    // fetch public department list (no auth required)
+    const fetchDepartments = async () => {
+      try {
+        const apiBase = 'http://localhost:5000';
+        const res = await axios.get(`${apiBase}/api/departments/public-list`);
+        if (res.data && res.data.data) {
+          const names = res.data.data.map(d => d.name);
+          setDepartments(['all', ...names]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch departments', err);
+        // fallback to existing 'all' only
+        setDepartments(prev => prev.length ? prev : ['all']);
+      }
+    };
+    fetchDepartments();
   }, [isHR]);
 
   const [newSalary, setNewSalary] = useState({
@@ -80,7 +96,7 @@ const Salary = () => {
 
   const [editingSalary, setEditingSalary] = useState(null);
 
-  const departments = ['all', 'Engineering', 'Marketing', 'Sales', 'Human Resources', 'Finance', 'Operations'];
+  const [departments, setDepartments] = useState(['all']);
 
   const salaryTrends = [
     { month: 'Jan', total: 180000, avg: 60000 },
@@ -93,9 +109,11 @@ const Salary = () => {
 
   const filteredSalaries = salaries.filter(salary => {
     if (!isHR) return true; // Employees see all their own records
-    const matchesSearch = salary.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         salary.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = filterDepartment === 'all' || salary.department === filterDepartment;
+    const q = (searchTerm || '').toString().toLowerCase();
+    const name = (salary?.employeeName || '').toString().toLowerCase();
+    const empId = (salary?.employeeId || '').toString().toLowerCase();
+    const matchesSearch = q === '' || name.includes(q) || empId.includes(q);
+    const matchesDepartment = filterDepartment === 'all' || (salary?.department || '') === filterDepartment;
     return matchesSearch && matchesDepartment;
   });
 
@@ -216,6 +234,37 @@ const Salary = () => {
         toast.error(err.response?.data?.message || 'Error deleting payroll');
       }
     })();
+  };
+
+  const handleMarkAsPaid = async (id) => {
+    try {
+      const apiBase = 'http://localhost:5000';
+      const token = localStorage.getItem('authToken');
+      const res = await axios.patch(`${apiBase}/api/payroll/${id}`, { status: 'paid' }, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data && res.data.data) {
+        const p = res.data.data;
+        const updated = {
+          id: p._id,
+          employeeId: p.employeeId,
+          employeeName: p.employeeName || p.employee?.name || 'Unknown',
+          department: p.department || p.employee?.department || '',
+          position: p.position || p.employee?.position || '',
+          baseSalary: p.baseSalary,
+          bonus: p.bonus,
+          deductions: p.deductions,
+          netSalary: p.netSalary,
+          payDate: p.payDate ? new Date(p.payDate).toISOString().split('T')[0] : '',
+          status: p.status || 'pending'
+        };
+        setSalaries(salaries.map(s => s.id === updated.id ? updated : s));
+        toast.success('Payroll marked as paid');
+      } else {
+        toast.error('Failed to update payroll status');
+      }
+    } catch (err) {
+      console.error('Error marking payroll as paid', err);
+      toast.error(err.response?.data?.message || 'Error updating payroll status');
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -441,8 +490,15 @@ const Salary = () => {
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-8 h-8">
-                      <AvatarFallback>{salary.employeeName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
+                        <AvatarFallback>{
+                          (salary?.employeeName || '')
+                            .toString()
+                            .split(' ')
+                            .filter(Boolean)
+                            .map(n => n[0])
+                            .join('') || '?'
+                        }</AvatarFallback>
+                      </Avatar>
                     <div>
                       <p className="font-medium">{salary.employeeName}</p>
                       <p className="text-sm text-muted-foreground">{salary.employeeId}</p>
@@ -450,10 +506,10 @@ const Salary = () => {
                   </div>
                 </TableCell>
                 <TableCell>{salary.department}</TableCell>
-                <TableCell>${salary.baseSalary.toLocaleString()}</TableCell>
-                <TableCell>${salary.bonus.toLocaleString()}</TableCell>
-                <TableCell>${salary.deductions.toLocaleString()}</TableCell>
-                <TableCell className="font-semibold">${salary.netSalary.toLocaleString()}</TableCell>
+                <TableCell>${Number(salary?.baseSalary || 0).toLocaleString()}</TableCell>
+                <TableCell>${Number(salary?.bonus || 0).toLocaleString()}</TableCell>
+                <TableCell>${Number(salary?.deductions || 0).toLocaleString()}</TableCell>
+                <TableCell className="font-semibold">${Number(salary?.netSalary || 0).toLocaleString()}</TableCell>
                 <TableCell>{getStatusBadge(salary.status)}</TableCell>
                  {isHR && (
                    <TableCell>
@@ -461,6 +517,16 @@ const Salary = () => {
                        <Button variant="ghost" size="sm" onClick={() => handleEditSalary(salary)}>
                          <Edit className="w-4 h-4" />
                        </Button>
+                         {salary.status !== 'paid' && (
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => handleMarkAsPaid(salary.id)}
+                             title="Mark as paid"
+                           >
+                             <DollarSign className="w-4 h-4" />
+                           </Button>
+                         )}
                        <Button 
                          variant="ghost" 
                          size="sm" 
