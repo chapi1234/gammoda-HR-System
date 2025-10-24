@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -17,6 +17,7 @@ import {
   User, FileText, AlertCircle
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const LeaveRequests = () => {
   const { isHR, user } = useAuth();
@@ -24,51 +25,9 @@ const LeaveRequests = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  // Mock leave requests data
-  const [leaveRequests, setLeaveRequests] = useState([
-    {
-      id: 1,
-      employeeId: 'EMP001',
-      employeeName: 'Mete Asfaw',
-      leaveType: 'Annual Leave',
-      startDate: '2024-02-15',
-      endDate: '2024-02-20',
-      duration: 5,
-      reason: 'Family vacation',
-      status: 'pending',
-      appliedDate: '2024-01-15',
-      reviewedBy: null,
-      reviewDate: null
-    },
-    {
-      id: 2,
-      employeeId: 'EMP002',
-      employeeName: 'Miki Haile',
-      leaveType: 'Sick Leave',
-      startDate: '2024-01-20',
-      endDate: '2024-01-22',
-      duration: 3,
-      reason: 'Medical treatment',
-      status: 'approved',
-      appliedDate: '2024-01-18',
-      reviewedBy: 'HR Manager',
-      reviewDate: '2024-01-19'
-    },
-    {
-      id: 3,
-      employeeId: 'EMP003',
-      employeeName: 'Samrawit Fikru',
-      leaveType: 'Personal Leave',
-      startDate: '2024-01-10',
-      endDate: '2024-01-12',
-      duration: 3,
-      reason: 'Personal matters',
-      status: 'rejected',
-      appliedDate: '2024-01-05',
-      reviewedBy: 'HR Manager',
-      reviewDate: '2024-01-08'
-    }
-  ]);
+  const API_BASE = 'http://localhost:5000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const [leaveRequests, setLeaveRequests] = useState([]);
 
   const [newLeave, setNewLeave] = useState({
     leaveType: '',
@@ -78,14 +37,73 @@ const LeaveRequests = () => {
   });
 
   const statusOptions = ['all', 'pending', 'approved', 'rejected'];
-  const leaveTypes = ['Annual Leave', 'Sick Leave', 'Personal Leave', 'Maternity Leave', 'Emergency Leave'];
+  const leaveTypes = ['Annual Leave', 'Sick Leave', 'Personal Leave', 'Maternity Leave', 'Paternity Leave', 'Bereavement Leave'];
 
+  // Map frontend labels to backend enum and vice versa
+  const toBackendType = (label) => {
+    const map = {
+      'Annual Leave': 'vacation',
+      'Sick Leave': 'sick',
+      'Personal Leave': 'personal',
+      'Maternity Leave': 'maternity',
+      'Paternity Leave': 'paternity',
+      'Bereavement Leave': 'bereavement',
+      'Emergency Leave': 'personal',
+    };
+    return map[label] || 'personal';
+  };
+  const toFrontendType = (type) => {
+    const map = {
+      vacation: 'Annual Leave',
+      sick: 'Sick Leave',
+      personal: 'Personal Leave',
+      maternity: 'Maternity Leave',
+      paternity: 'Paternity Leave',
+      bereavement: 'Bereavement Leave',
+    };
+    return map[type] || type;
+  };
+
+  const mapLeave = (l) => ({
+    id: l._id,
+    employeeId: l.employee?.employeeId || '',
+    employeeName: l.employee?.name || '',
+    leaveType: toFrontendType(l.type),
+    startDate: l.startDate,
+    endDate: l.endDate,
+    duration: l.days,
+    reason: l.reason,
+    status: l.status,
+    appliedDate: l.createdAt,
+    reviewedBy: l.manager?.name || null,
+    reviewDate: l.approvalDate || null,
+  });
+
+  const fetchLeaves = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/leave`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const items = Array.isArray(res.data?.data) ? res.data.data : [];
+      setLeaveRequests(items.map(mapLeave));
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load leave requests');
+    }
+  };
+
+  useEffect(() => {
+    if (token) fetchLeaves();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, isHR]);
+
+  // Backend already scopes: HR = all, Employee = own only.
+  // Do not filter by employeeId client-side to avoid hiding valid items when employeeId is missing/mismatched.
   const filteredRequests = leaveRequests.filter(request => {
     const matchesSearch = request.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
-    const isOwnRequest = !isHR ? request.employeeId === user?.employeeId : true;
-    return matchesSearch && matchesStatus && isOwnRequest;
+    return matchesSearch && matchesStatus;
   });
 
   const calculateDuration = (startDate, endDate) => {
@@ -95,44 +113,56 @@ const LeaveRequests = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   };
 
-  const handleAddLeave = () => {
+  const handleAddLeave = async () => {
     if (!newLeave.leaveType || !newLeave.startDate || !newLeave.endDate || !newLeave.reason) {
       toast.error('Please fill in all required fields');
       return;
     }
-
-    const duration = calculateDuration(newLeave.startDate, newLeave.endDate);
-    
-    const leave = {
-      ...newLeave,
-      id: leaveRequests.length + 1,
-      employeeId: user?.employeeId || 'EMP999',
-      employeeName: user?.name || 'Current User',
-      duration,
-      status: 'pending',
-      appliedDate: new Date().toISOString().split('T')[0],
-      reviewedBy: null,
-      reviewDate: null
-    };
-
-    setLeaveRequests([...leaveRequests, leave]);
-    setNewLeave({ leaveType: '', startDate: '', endDate: '', reason: '' });
-    setShowAddDialog(false);
-    toast.success('Leave request submitted successfully!');
+    try {
+      const payload = {
+        type: toBackendType(newLeave.leaveType),
+        startDate: newLeave.startDate,
+        endDate: newLeave.endDate,
+        reason: newLeave.reason,
+      };
+      const res = await axios.post(`${API_BASE}/api/leave`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  setNewLeave({ leaveType: '', startDate: '', endDate: '', reason: '' });
+  setShowAddDialog(false);
+  await fetchLeaves();
+  toast.success('Leave request submitted successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to submit leave request');
+    }
   };
 
-  const handleApproveReject = (id, status) => {
-    setLeaveRequests(prev => prev.map(request => 
-      request.id === id 
-        ? { 
-            ...request, 
-            status, 
-            reviewedBy: 'HR Manager',
-            reviewDate: new Date().toISOString().split('T')[0]
-          }
-        : request
-    ));
-    toast.success(`Leave request ${status} successfully!`);
+  const handleApproveReject = async (id, status) => {
+    try {
+      await axios.patch(`${API_BASE}/api/leave/${id}/review`, { status }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Refresh item
+      await fetchLeaves();
+      toast.success(`Leave request ${status} successfully!`);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update request');
+    }
+  };
+
+  const handleCancel = async (id) => {
+    try {
+      await axios.delete(`${API_BASE}/api/leave/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLeaveRequests(prev => prev.filter(r => r.id !== id));
+      toast.success('Leave request cancelled');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to cancel request');
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -322,7 +352,7 @@ const LeaveRequests = () => {
               <TableHead>Duration</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Applied Date</TableHead>
-              {isHR && <TableHead>Actions</TableHead>}
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -345,32 +375,40 @@ const LeaveRequests = () => {
                 <TableCell>{request.duration} day(s)</TableCell>
                 <TableCell>{getStatusBadge(request.status)}</TableCell>
                 <TableCell>{new Date(request.appliedDate).toLocaleDateString()}</TableCell>
-                {isHR && (
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {request.status === 'pending' && (
-                        <>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="text-green-600 hover:text-green-700"
-                            onClick={() => handleApproveReject(request.id, 'approved')}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleApproveReject(request.id, 'rejected')}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                )}
+                <TableCell>
+                  <div className="flex space-x-2">
+                    {isHR && request.status === 'pending' && (
+                      <>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-green-600 hover:text-green-700"
+                          onClick={() => handleApproveReject(request.id, 'approved')}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleApproveReject(request.id, 'rejected')}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                    {!isHR && request.status === 'pending' && request.employeeId === (user?.employeeId || '') && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleCancel(request.id)}
+                      >
+                        <X className="w-4 h-4" /> Cancel
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
