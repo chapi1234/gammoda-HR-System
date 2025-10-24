@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -13,7 +14,7 @@ import {
 } from '../components/ui/table';
 import {
   Search, Plus, Filter, Edit, Trash2, Mail, Phone, MapPin,
-  Building2, Calendar, DollarSign, MoreHorizontal, UserPlus
+  Building2, Calendar, DollarSign, MoreHorizontal, UserPlus, Users
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -25,87 +26,48 @@ const Employees = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  // Mock employee data
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      name: 'Tamirat Kibrom',
-      email: 'tamirat.kibrom@company.com',
-      phone: '+1 (555) 123-4567',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      salary: 95000,
-      joinDate: '2022-03-15',
-      status: 'active',
-      avatar: 'https://ui-avatars.com/api/?name=Tamirat+Kibrom&background=3b82f6&color=fff',
-      address: '123 Main St, San Francisco, CA',
-      employeeId: 'EMP001'
-    },
-    {
-      id: 2,
-      name: 'Surafel Takele',
-      email: 'surafel.takele@gmail.com@company.com',
-      phone: '+1 (555) 234-5678',
-      department: 'Marketing',
-      position: 'Marketing Manager',
-      salary: 75000,
-      joinDate: '2021-08-20',
-      status: 'active',
-      avatar: 'https://ui-avatars.com/api/?name=Surafel+Takele&background=10b981&color=fff',
-      address: '456 Oak Ave, San Francisco, CA',
-      employeeId: 'EMP002'
-    },
-    {
-      id: 3,
-      name: 'Nibru Kefyalew',
-      email: 'nibru.kefyalew@company.com',
-      phone: '+1 (555) 345-6789',
-      department: 'Sales',
-      position: 'Sales Representative',
-      salary: 65000,
-      joinDate: '2023-01-10',
-      status: 'active',
-      avatar: 'https://ui-avatars.com/api/?name=Nibru+Kefyalew&background=f59e0b&color=fff',
-      address: '789 Pine St, San Francisco, CA',
-      employeeId: 'EMP003'
-    },
-    {
-      id: 4,
-      name: 'Dawit Yitbarek',
-      email: 'dawit.yitbarek@company.com',
-      phone: '+1 (555) 456-7890',
-      department: 'Engineering',
-      position: 'Frontend Developer',
-      salary: 80000,
-      joinDate: '2022-11-05',
-      status: 'active',
-      avatar: 'https://ui-avatars.com/api/?name=David+Yitbarek&background=8b5cf6&color=fff',
-      address: '321 Elm Dr, San Francisco, CA',
-      employeeId: 'EMP004'
-    },
-    {
-      id: 5,
-      name: 'Liya Abeselom',
-      email: 'liya.abeselom@company.com',
-      phone: '+1 (555) 567-8901',
-      department: 'Human Resources',
-      position: 'HR Specialist',
-      salary: 70000,
-      joinDate: '2021-06-15',
-      status: 'on_leave',
-      avatar: 'https://ui-avatars.com/api/?name=Liya+Abeselom&background=ef4444&color=fff',
-      address: '654 Birch Ln, San Francisco, CA',
-      employeeId: 'EMP005'
-    }
-  ]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
+  // Departments from backend: [{ id, name }]
+  const [departments, setDepartments] = useState([]);
+  const departmentNames = useMemo(() => departments.map(d => d.name), [departments]);
+  const API_BASE = 'http://localhost:5000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
-  const departments = ['all', 'Engineering', 'Marketing', 'Sales', 'Human Resources', 'Finance', 'Operations'];
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_BASE}/api/employees`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const list = res.data?.data || [];
+      setEmployees(list);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load employees');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch departments as { id, name }
+  const fetchDepartments = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/departments/public-list`);
+      const list = Array.isArray(res.data?.data) ? res.data.data : [];
+      setDepartments(list);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load departments');
+    }
+  };
 
   const [newEmployee, setNewEmployee] = useState({
     name: '',
     email: '',
+    password: '',
     phone: '',
-    department: '',
+    departmentId: '',
     position: '',
     salary: '',
     address: '',
@@ -115,65 +77,101 @@ const Employees = () => {
   const [editingEmployee, setEditingEmployee] = useState(null);
 
   const filteredEmployees = employees.filter(employee => {
-    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = filterDepartment === 'all' || employee.department === filterDepartment;
+    const q = (searchTerm || '').toLowerCase();
+    const name = (employee?.name || '').toString().toLowerCase();
+    const email = (employee?.email || '').toString().toLowerCase();
+    const dept = (employee?.department || '').toString().toLowerCase();
+
+    const matchesSearch = q === '' || name.includes(q) || email.includes(q) || dept.includes(q);
+    const matchesDepartment = filterDepartment === 'all' || (employee?.department === filterDepartment);
     return matchesSearch && matchesDepartment;
   });
 
-  const handleAddEmployee = () => {
-    if (!newEmployee.name || !newEmployee.email || !newEmployee.department) {
+  const handleAddEmployee = async () => {
+    if (!newEmployee.name || !newEmployee.email || !newEmployee.departmentId) {
       toast.error('Please fill in all required fields');
       return;
     }
-
-    const employee = {
-      ...newEmployee,
-      id: employees.length + 1,
-      employeeId: `EMP${String(employees.length + 1).padStart(3, '0')}`,
-      status: 'active',
-      avatar: `https://ui-avatars.com/api/?name=${newEmployee.name.replace(' ', '+')}&background=3b82f6&color=fff`,
-      salary: parseInt(newEmployee.salary)
-    };
-
-    setEmployees([...employees, employee]);
-    setNewEmployee({
-      name: '', email: '', password: '', phone: '', department: '', position: '',
-      salary: '', address: '', joinDate: new Date().toISOString().split('T')[0]
-    });
-    setShowAddDialog(false);
-    toast.success('Employee added successfully!');
+    try {
+      const payload = {
+        name: newEmployee.name,
+        email: newEmployee.email,
+        password: newEmployee.password,
+        phone: newEmployee.phone,
+        departmentId: newEmployee.departmentId,
+        position: newEmployee.position,
+        salary: newEmployee.salary ? Number(newEmployee.salary) : undefined,
+        address: newEmployee.address,
+        joinDate: newEmployee.joinDate,
+        status: 'active',
+      };
+      const res = await axios.post(`${API_BASE}/api/employees/create`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const created = res.data?.data;
+      if (!created) throw new Error('No employee returned');
+      setEmployees(prev => [...prev, created]);
+      setNewEmployee({
+        name: '', email: '', password: '', phone: '', departmentId: '', position: '',
+        salary: '', address: '', joinDate: new Date().toISOString().split('T')[0]
+      });
+      setShowAddDialog(false);
+      toast.success('Employee added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to add employee');
+    }
   };
 
   const handleEditEmployee = (employee) => {
     setEditingEmployee({
       ...employee,
-      salary: employee.salary.toString()
+      departmentId: employee.departmentId || '',
+      // Guard against undefined/null salary to avoid runtime errors when opening the dialog
+      salary: employee?.salary != null ? String(employee.salary) : ''
     });
   };
 
-  const handleUpdateEmployee = () => {
-    if (!editingEmployee.name || !editingEmployee.email || !editingEmployee.department) {
+  const handleUpdateEmployee = async () => {
+    if (!editingEmployee.name || !editingEmployee.email || !editingEmployee.departmentId) {
       toast.error('Please fill in all required fields');
       return;
     }
-
-    const updatedEmployee = {
-      ...editingEmployee,
-      salary: parseInt(editingEmployee.salary) || 0
-    };
-
-    setEmployees(employees.map(emp => 
-      emp.id === editingEmployee.id ? updatedEmployee : emp
-    ));
-    setEditingEmployee(null);
-    toast.success('Employee updated successfully!');
+    try {
+      const payload = {
+        name: editingEmployee.name,
+        email: editingEmployee.email,
+        phone: editingEmployee.phone,
+        departmentId: editingEmployee.departmentId,
+        position: editingEmployee.position,
+        salary: editingEmployee.salary ? Number(editingEmployee.salary) : undefined,
+      };
+      const res = await axios.put(`${API_BASE}/api/employees/edit/${editingEmployee.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updated = res.data?.data;
+      if (!updated) throw new Error('No employee returned');
+      setEmployees(prev => prev.map(emp => emp.id === updated.id ? updated : emp));
+      setEditingEmployee(null);
+      toast.success('Employee updated successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update employee');
+    }
   };
 
-  const handleDeleteEmployee = (id) => {
-    setEmployees(employees.filter(emp => emp.id !== id));
-    toast.success('Employee removed successfully!');
+  const handleDeleteEmployee = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this employee?')) return;
+    try {
+      await axios.delete(`${API_BASE}/api/employees/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEmployees(prev => prev.filter(emp => emp.id !== id));
+      toast.success('Employee removed successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to remove employee');
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -188,6 +186,13 @@ const Employees = () => {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchEmployees();
+    fetchDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!isHR) {
     return (
@@ -263,15 +268,15 @@ const Employees = () => {
                 <div className="space-y-2">
                   <Label htmlFor="department">Department *</Label>
                   <Select 
-                    value={newEmployee.department} 
-                    onValueChange={(value) => setNewEmployee({ ...newEmployee, department: value })}
+                    value={newEmployee.departmentId} 
+                    onValueChange={(value) => setNewEmployee({ ...newEmployee, departmentId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      {departments.filter(d => d !== 'all').map(dept => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -367,7 +372,7 @@ const Employees = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Departments</p>
-                <p className="text-xl font-bold">{departments.length - 1}</p>
+                <p className="text-xl font-bold">{departments.length}</p>
               </div>
             </div>
           </CardContent>
@@ -393,7 +398,7 @@ const Employees = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {departments.map(dept => (
+                {["all", ...departmentNames].map(dept => (
                   <SelectItem key={dept} value={dept}>
                     {dept === 'all' ? 'All Departments' : dept}
                   </SelectItem>
@@ -430,7 +435,7 @@ const Employees = () => {
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={employee.avatar} alt={employee.name} />
-                      <AvatarFallback>{employee.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      <AvatarFallback>{(employee?.name ? employee.name.split(' ').map(n => n[0] || '').join('') : '')}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h3 className="font-semibold text-foreground">{employee.name}</h3>
@@ -460,7 +465,7 @@ const Employees = () => {
                   </div>
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <DollarSign className="w-4 h-4" />
-                    <span>${employee.salary.toLocaleString()}/year</span>
+                    <span>${(employee.salary ?? 0).toLocaleString()}/year</span>
                   </div>
                 </div>
 
@@ -507,7 +512,7 @@ const Employees = () => {
                     <div className="flex items-center space-x-3">
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={employee.avatar} alt={employee.name} />
-                        <AvatarFallback>{employee.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        <AvatarFallback>{(employee?.name ? employee.name.split(' ').map(n => n[0] || '').join('') : '')}</AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="font-medium">{employee.name}</p>
@@ -517,7 +522,7 @@ const Employees = () => {
                   </TableCell>
                   <TableCell>{employee.department}</TableCell>
                   <TableCell>{employee.position}</TableCell>
-                  <TableCell>${employee.salary.toLocaleString()}</TableCell>
+                  <TableCell>${(employee.salary ?? 0).toLocaleString()}</TableCell>
                   <TableCell>{getStatusBadge(employee.status)}</TableCell>
                    <TableCell>
                      <div className="flex space-x-2">
@@ -579,7 +584,7 @@ const Employees = () => {
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
                   id="edit-phone"
-                  value={editingEmployee.phone}
+                  value={editingEmployee.phone ?? ''}
                   onChange={(e) => setEditingEmployee({ ...editingEmployee, phone: e.target.value })}
                 />
               </div>
@@ -587,15 +592,15 @@ const Employees = () => {
                 <div className="space-y-2">
                   <Label htmlFor="edit-department">Department *</Label>
                   <Select 
-                    value={editingEmployee.department} 
-                    onValueChange={(value) => setEditingEmployee({ ...editingEmployee, department: value })}
+                    value={editingEmployee?.departmentId || ''} 
+                    onValueChange={(value) => setEditingEmployee({ ...editingEmployee, departmentId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {departments.filter(d => d !== 'all').map(dept => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -614,7 +619,7 @@ const Employees = () => {
                 <Label htmlFor="edit-position">Position</Label>
                 <Input
                   id="edit-position"
-                  value={editingEmployee.position}
+                  value={editingEmployee.position ?? ''}
                   onChange={(e) => setEditingEmployee({ ...editingEmployee, position: e.target.value })}
                 />
               </div>
