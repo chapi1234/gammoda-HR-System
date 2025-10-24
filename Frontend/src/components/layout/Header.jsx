@@ -28,14 +28,24 @@ import {
   Briefcase,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  Laptop
 } from 'lucide-react';
+import logo  from '../../assets/download.jpg';
 
 export const Header = () => {
   const { user, logout, isHR } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Safely resolve department name whether it's an id string, plain string, or populated object
+  const getDepartmentName = (dept) => {
+    if (!dept) return "";
+    if (typeof dept === "string") return dept; // could be a name or an id string
+    if (typeof dept === "object" && dept.name) return dept.name;
+    return "";
+  };
 
   const toggleTheme = () => {
     if (theme === 'light') {
@@ -73,6 +83,7 @@ export const Header = () => {
     { label: 'Salary', href: '/salary', icon: DollarSign },
     { label: 'Leave Requests', href: '/leave-requests', icon: Calendar },
     { label: 'Recruitment', href: '/recruitment', icon: Briefcase },
+    { label: 'Device Management', href: '/device-management', icon: Laptop },
   ] : [
     { label: 'Dashboard', href: '/dashboard', icon: Building2 },
     { label: 'My Profile', href: '/profile', icon: User },
@@ -80,6 +91,7 @@ export const Header = () => {
     { label: 'My Salary', href: '/salary', icon: DollarSign },
     { label: 'Leave Requests', href: '/leave-requests', icon: Calendar },
     { label: 'Calendar', href: '/calendar', icon: Calendar },
+    { label: 'My Devices', href: '/my-devices', icon: Laptop },
   ];
 
   return (
@@ -92,11 +104,12 @@ export const Header = () => {
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+              {/* <Building2 className="w-5 h-5 text-white" /> */}
+              <img src={logo} alt="GammoDA Logo" className="w-8 h-8 object-cover" />
             </div>
             <div>
               <h1 className="font-bold text-xl text-foreground">GammoDA</h1>
-              <p className="text-xs text-muted-foreground -mt-1">Employee Management</p>
+              <p className="text-xs text-muted-foreground -mt-1">HRM System</p>
             </div>
           </Link>
 
@@ -130,13 +143,13 @@ export const Header = () => {
               <ThemeIcon className="w-5 h-5" />
             </Button>
 
-            {/* Notifications */}
+            {/* Notifications
             <Button variant="ghost" size="sm" className="relative">
               <Bell className="w-5 h-5" />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center">
                 <span className="text-[10px] text-destructive-foreground font-medium">3</span>
               </div>
-            </Button>
+            </Button> */}
 
             {/* User Dropdown */}
             <DropdownMenu>
@@ -163,7 +176,7 @@ export const Header = () => {
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                   <Badge variant={isHR ? "default" : "secondary"} className="text-xs mt-1">
-                    {user?.department}
+                    {getDepartmentName(user?.department)}
                   </Badge>
                 </div>
                 <DropdownMenuSeparator />
