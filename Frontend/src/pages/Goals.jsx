@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import {
@@ -47,52 +47,12 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const Goals = () => {
   const { user } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [goals, setGoals] = useState([
-    {
-      id: 1,
-      title: "Complete React Certification",
-      description: "Finish the advanced React development course",
-      progress: 75,
-      target: 100,
-      deadline: "2024-12-31",
-      category: "skill",
-      status: "in-progress",
-    },
-    {
-      id: 2,
-      title: "Improve Team Collaboration",
-      description: "Enhance communication and teamwork skills",
-      progress: 60,
-      target: 100,
-      deadline: "2024-11-30",
-      category: "soft-skill",
-      status: "in-progress",
-    },
-    {
-      id: 3,
-      title: "Complete Project Alpha",
-      description: "Deliver the frontend components for Project Alpha",
-      progress: 90,
-      target: 100,
-      deadline: "2024-09-15",
-      category: "project",
-      status: "in-progress",
-    },
-    {
-      id: 4,
-      title: "Attend 5 Tech Conferences",
-      description: "Participate in industry conferences for networking",
-      progress: 80,
-      target: 100,
-      deadline: "2024-12-01",
-      category: "networking",
-      status: "in-progress",
-    },
-  ]);
+  const [goals, setGoals] = useState([]);
 
   const achievements = [
     {
@@ -131,7 +91,28 @@ const Goals = () => {
   const category = ["skill", "soft-skill", "project", "networking"];
   const [editingGoal, setEditingGoal] = useState(null);
 
-  const handleAddGoal = () => {
+  const API_BASE = 'http://localhost:5000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+  const fetchGoals = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/goals`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGoals(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load goals');
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchGoals();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAddGoal = async () => {
     if (
       !newGoal.title ||
       !newGoal.description ||
@@ -141,27 +122,33 @@ const Goals = () => {
       toast.error("Please fill in all required fields");
       return;
     }
-
-    const goal = {
-      ...newGoal,
-      id: goals.length + 1,
-      progress: parseInt(newGoal.progress) || 0,
-      target: parseInt(newGoal.target) || 100,
-      status: "in-progress",
-    };
-
-    setGoals([...goals, goal]);
-    setNewGoal({
-      title: "",
-      description: "",
-      progress: 0,
-      target: 100,
-      deadline: "",
-      category: "",
-      status: "in-progress",
-    });
-    setShowAddDialog(false);
-    toast.success("Goal added successfully!");
+    try {
+      const payload = {
+        ...newGoal,
+        progress: Number(newGoal.progress) || 0,
+        target: Number(newGoal.target) || 100,
+      };
+      const res = await axios.post(`${API_BASE}/api/goals`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const created = res.data?.data;
+      if (!created) throw new Error('No goal returned');
+      setGoals(prev => [created, ...prev]);
+      setNewGoal({
+        title: "",
+        description: "",
+        progress: 0,
+        target: 100,
+        deadline: "",
+        category: "skill",
+        status: "in-progress",
+      });
+      setShowAddDialog(false);
+      toast.success("Goal added successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to add goal');
+    }
   };
 
   const handleEditGoal = (goal) => {
@@ -172,29 +159,35 @@ const Goals = () => {
     });
   };
 
-  const handleUpdateGoal = () => {
+  const handleUpdateGoal = async () => {
     if (!editingGoal.title || !editingGoal.description || !editingGoal.deadline || !editingGoal.category) {
       toast.error('Please fill in all required fields');
       return;
     }
-
-    const updatedGoal = {
-      ...editingGoal,
-      progress: parseInt(editingGoal.progress) || 0,
-      target: parseInt(editingGoal.target) || 100
-    };
-
-    setGoals(goals.map(goal =>
-      goal.id === editingGoal.id ? updatedGoal : goal
-    ));
-    setEditingGoal(null);
-    toast.success('Goal updated successfully!');
+    try {
+      const payload = {
+        ...editingGoal,
+        progress: Number(editingGoal.progress) || 0,
+        target: Number(editingGoal.target) || 100,
+      };
+      const res = await axios.put(`${API_BASE}/api/goals/${editingGoal.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updated = res.data?.data;
+      if (!updated) throw new Error('No goal returned');
+      setGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
+      setEditingGoal(null);
+      toast.success('Goal updated successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update goal');
+    }
   };
 
   // const handleUpdateGoal = () => {
   //   if (
   //     !editingGoal.title ||
-  //     !editingGoal.description ||
+  //     !editingGoal.description || 
   //     !editingGoal.deadline ||
   //     !editingGoal.category
   //   ) {
@@ -238,20 +231,34 @@ const Goals = () => {
   //   toast.success("Goal updated successfully!");
   // };
   
-  const handleDeleteGoal = (id) => {
-    setGoals(goals.filter((goal) => goal.id !== id));
-    toast.success("Goal removed successfully!");
+  const handleDeleteGoal = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this goal?')) return;
+    try {
+      await axios.delete(`${API_BASE}/api/goals/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGoals(goals.filter((goal) => goal.id !== id));
+      toast.success("Goal removed successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to delete goal');
+    }
   };
 
-  const updateGoalProgress = (goalId, newProgress) => {
-    setGoals(
-      goals.map((goal) =>
-        goal.id === goalId
-          ? { ...goal, progress: Math.min(newProgress, goal.target) }
-          : goal
-      )
-    );
-    toast.success("Goal progress updated!");
+  const updateGoalProgress = async (goalId, newProgress) => {
+    try {
+      const res = await axios.put(`${API_BASE}/api/goals/${goalId}`, { progress: newProgress }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updated = res.data?.data;
+      if (updated) {
+        setGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
+      }
+      toast.success("Goal progress updated!");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update progress');
+    }
   };
 
   const getProgressColor = (progress) => {

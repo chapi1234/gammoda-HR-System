@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -34,56 +35,64 @@ const Calendar = () => {
     attendees: []
   });
 
-  // Mock events data
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: 'Team Standup',
-      description: 'Daily team sync meeting',
-      date: '2024-02-15',
-      time: '09:00',
-      duration: 30,
-      type: 'meeting',
-      location: 'Conference Room A',
-      attendees: ['Sarah Johnson', 'Michael Chen'],
-      color: 'bg-blue-500'
-    },
-    {
-      id: 2,
-      title: 'Company Holiday',
-      description: 'Presidents Day - Office Closed',
-      date: '2024-02-19',
-      time: 'all-day',
-      type: 'holiday',
-      location: '',
-      attendees: [],
-      color: 'bg-red-500'
-    },
-    {
-      id: 3,
-      title: 'Project Review',
-      description: 'Q1 project milestone review',
-      date: '2024-02-20',
-      time: '14:00',
-      duration: 120,
-      type: 'meeting',
-      location: 'Zoom',
-      attendees: ['Emily Rodriguez', 'David Wilson'],
-      color: 'bg-green-500'
-    },
-    {
-      id: 4,
-      title: 'Training Workshop',
-      description: 'React.js Advanced Concepts',
-      date: '2024-02-22',
-      time: '10:00',
-      duration: 240,
-      type: 'training',
-      location: 'Training Room B',
-      attendees: ['Sarah Johnson', 'Michael Chen', 'Emily Rodriguez'],
-      color: 'bg-purple-500'
+  // Events from API
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const API_BASE = 'http://localhost:5000';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+  const toYMD = (d) => {
+    if (!d) return '';
+    const date = d instanceof Date ? d : new Date(d);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const monthRange = useMemo(() => {
+    const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    return { from: toYMD(start), to: toYMD(end) };
+  }, [selectedDate]);
+
+  const transformEvent = (e) => ({
+    id: e._id || e.id,
+    title: e.title,
+    description: e.description || '',
+    date: toYMD(e.date),
+    time: e.time || '09:00',
+    duration: e.duration,
+    type: e.type,
+    location: e.location || '',
+    attendees: Array.isArray(e.attendees) ? e.attendees : [],
+    color: e.color || 'bg-gray-500',
+  });
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        from: monthRange.from,
+        to: monthRange.to,
+      };
+      if (filterType !== 'all') params.type = filterType;
+      if (searchTerm && searchTerm.trim().length > 0) params.q = searchTerm.trim();
+
+      const res = await axios.get(`${API_BASE}/api/events`, {
+        params,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const list = res.data?.data || [];
+      setEvents(list.map(transformEvent));
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load events');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const eventTypes = [
     { value: 'meeting', label: 'Meeting', color: 'bg-blue-500' },
@@ -105,27 +114,44 @@ const Calendar = () => {
     return filteredEvents.filter(event => event.date === dateStr);
   };
 
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     if (!newEvent.title || !newEvent.date) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    const event = {
-      ...newEvent,
-      id: events.length + 1,
-      color: eventTypes.find(type => type.value === newEvent.type)?.color || 'bg-gray-500',
-      attendees: newEvent.attendees || []
-    };
+    try {
+      const payload = {
+        ...newEvent,
+        duration: newEvent.duration ? Number(newEvent.duration) : undefined,
+        date: newEvent.date, // already YYYY-MM-DD
+      };
 
-    setEvents([...events, event]);
-    setNewEvent({
-      title: '', description: '', date: new Date().toISOString().split('T')[0],
-      time: '09:00', duration: '60', type: 'meeting', location: '', attendees: []
-    });
-    setShowEventDialog(false);
-    toast.success('Event added successfully!');
+      const res = await axios.post(`${API_BASE}/api/events`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const created = res.data?.data;
+      if (!created) throw new Error('No event returned');
+
+      setEvents((prev) => [...prev, transformEvent(created)]);
+      setNewEvent({
+        title: '', description: '', date: new Date().toISOString().split('T')[0],
+        time: '09:00', duration: '60', type: 'meeting', location: '', attendees: []
+      });
+      setShowEventDialog(false);
+      toast.success('Event added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to add event');
+    }
   };
+
+  // Fetch events when month, filter, or search changes
+  useEffect(() => {
+    if (!token) return; // must be authenticated
+    fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthRange.from, monthRange.to, filterType, searchTerm]);
 
   const formatTime = (time) => {
     if (time === 'all-day') return 'All Day';
@@ -371,7 +397,9 @@ const Calendar = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {getEventsForDate(selectedDate).length > 0 ? (
+                {loading ? (
+                  <p className="text-muted-foreground text-sm text-center py-4">Loading events…</p>
+                ) : getEventsForDate(selectedDate).length > 0 ? (
                   getEventsForDate(selectedDate).map((event) => (
                     <div key={event.id} className="p-3 border rounded-lg space-y-2">
                       <div className="flex items-start justify-between">
@@ -422,7 +450,7 @@ const Calendar = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {filteredEvents
+                {(loading ? [] : filteredEvents)
                   .filter(event => new Date(event.date) >= new Date())
                   .slice(0, 5)
                   .map((event) => (
