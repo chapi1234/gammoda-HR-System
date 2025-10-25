@@ -48,35 +48,29 @@ import {
 } from "../components/ui/dialog";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { postActivity } from '../lib/postActivity';
 
 const Goals = () => {
   const { user } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [goals, setGoals] = useState([]);
 
-  const achievements = [
-    {
-      id: 1,
-      title: "Employee of the Month",
-      description: "Outstanding performance in July 2024",
-      date: "2024-07-31",
-      type: "recognition",
-    },
-    {
-      id: 2,
-      title: "Project Excellence Award",
-      description: "Successfully delivered Project Beta ahead of schedule",
-      date: "2024-06-15",
-      type: "project",
-    },
-    {
-      id: 3,
-      title: "Team Player Award",
-      description: "Exceptional collaboration and support to team members",
-      date: "2024-05-20",
-      type: "teamwork",
-    },
-  ];
+  // Achievements are derived from completed goals
+  const achievements = (goals || []).filter(g => (g.status || '').toLowerCase() === 'completed').map(g => {
+    const id = g.id || g._id;
+    const dateRaw = g.completedAt || g.updatedAt || g.createdAt || new Date().toISOString();
+    const date = new Date(dateRaw);
+    return {
+      id,
+      title: g.title,
+      description: g.description,
+      date: date.toISOString().slice(0,10),
+      type: g.category || 'goal',
+    };
+  });
+
+  // Active goals (exclude completed)
+  const activeGoals = (goals || []).filter(g => (g.status || '').toLowerCase() !== 'completed');
 
   const [newGoal, setNewGoal] = useState({
     title: "",
@@ -145,6 +139,9 @@ const Goals = () => {
       });
       setShowAddDialog(false);
       toast.success("Goal added successfully!");
+      try {
+        postActivity({ token, actor: user?.id || user?._id, action: 'Created goal', type: 'goal', meta: { id: created.id || created._id, title: created.title } });
+      } catch (e) { /* ignore */ }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to add goal');
@@ -178,6 +175,10 @@ const Goals = () => {
       setGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
       setEditingGoal(null);
       toast.success('Goal updated successfully!');
+      try {
+        const action = (updated.status || '').toLowerCase() === 'completed' ? 'Completed goal' : 'Updated goal';
+        postActivity({ token, actor: user?.id || user?._id, action, type: 'goal', meta: { id: updated.id || updated._id, title: updated.title } });
+      } catch (e) { /* ignore */ }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to update goal');
@@ -255,6 +256,10 @@ const Goals = () => {
         setGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
       }
       toast.success("Goal progress updated!");
+      try {
+        const action = (updated?.status || '').toLowerCase() === 'completed' || (updated?.progress >= 100) ? 'Completed goal' : 'Updated goal progress';
+        postActivity({ token, actor: user?.id || user?._id, action, type: 'goal', meta: { id: updated?.id || updated?._id, progress: updated?.progress } });
+      } catch (e) { /* ignore */ }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to update progress');
@@ -396,7 +401,7 @@ const Goals = () => {
                   <Target className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{goals.length}</p>
+                  <p className="text-2xl font-bold">{activeGoals.length}</p>
                   <p className="text-sm text-muted-foreground">Active Goals</p>
                 </div>
               </div>
@@ -410,12 +415,8 @@ const Goals = () => {
                   <CheckCircle className="w-6 h-6 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">
-                    {Math.round(
-                      goals.reduce((acc, goal) => acc + goal.progress, 0) /
-                        goals.length
-                    )}
-                    %
+                    <p className="text-2xl font-bold">
+                    {activeGoals.length > 0 ? Math.round(activeGoals.reduce((acc, goal) => acc + (Number(goal.progress) || 0), 0) / activeGoals.length) : 0}%
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Average Progress
@@ -450,7 +451,7 @@ const Goals = () => {
           {/* Goals Tab */}
           <TabsContent value="goals" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {goals.map((goal) => {
+              {activeGoals.map((goal) => {
                 const CategoryIcon = getCategoryIcon(goal.category);
                 return (
                   <Card key={goal.id} className="dashboard-card">
