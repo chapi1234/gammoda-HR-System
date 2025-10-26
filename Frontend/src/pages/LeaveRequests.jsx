@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { postActivity } from '../lib/postActivity';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const LeaveRequests = () => {
   const { isHR, user } = useAuth();
@@ -25,7 +27,7 @@ const LeaveRequests = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
   const [leaveRequests, setLeaveRequests] = useState([]);
 
@@ -132,6 +134,10 @@ const LeaveRequests = () => {
   setShowAddDialog(false);
   await fetchLeaves();
   toast.success('Leave request submitted successfully!');
+      // Post activity (non-blocking)
+      try {
+        postActivity({ token, actor: user?.id || user?._id, action: 'Submitted leave request', type: 'leave', meta: { startDate: payload.startDate, endDate: payload.endDate, leaveType: payload.type } });
+      } catch (e) { /* ignore */ }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to submit leave request');
@@ -146,6 +152,9 @@ const LeaveRequests = () => {
       // Refresh item
       await fetchLeaves();
       toast.success(`Leave request ${status} successfully!`);
+      try {
+        postActivity({ token, actor: user?.id || user?._id, action: `Leave request ${status}`, type: 'leave', meta: { id, status } });
+      } catch (e) { /* ignore */ }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to update request');
@@ -159,6 +168,9 @@ const LeaveRequests = () => {
       });
       setLeaveRequests(prev => prev.filter(r => r.id !== id));
       toast.success('Leave request cancelled');
+      try {
+        postActivity({ token, actor: user?.id || user?._id, action: 'Cancelled leave request', type: 'leave', meta: { id } });
+      } catch (e) { /* ignore */ }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to cancel request');
