@@ -49,6 +49,7 @@ import {
 import { toast } from "react-toastify";
 import axios from "axios";
 import { postActivity } from '../lib/postActivity';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Goals = () => {
   const { user } = useAuth();
@@ -85,7 +86,7 @@ const Goals = () => {
   const category = ["skill", "soft-skill", "project", "networking"];
   const [editingGoal, setEditingGoal] = useState(null);
 
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
   const fetchGoals = async () => {
@@ -185,52 +186,6 @@ const Goals = () => {
     }
   };
 
-  // const handleUpdateGoal = () => {
-  //   if (
-  //     !editingGoal.title ||
-  //     !editingGoal.description || 
-  //     !editingGoal.deadline ||
-  //     !editingGoal.category
-  //   ) {
-  //     toast.error("Please fill in all required fields");
-  //     return;
-  //   }
-
-  //   const updatedGoal = {
-  //     ...editingGoal,
-  //     progress: parseInt(editingGoal.progress) || 0,
-  //     target: parseInt(editingGoal.target) || 100,
-  //   };
-
-  //   const wasCompleted =
-  //     goals.find((goal) => goal.id === editingGoal.id)?.status === "completed";
-  //   setGoals(
-  //     goals.map((goal) => (goal.id === editingGoal.id ? updatedGoal : goal))
-  //   );
-
-  //   // If goal is now completed and wasn't before, add to achievements
-  //   if (updatedGoal.status === "completed" && !wasCompleted) {
-  //     const alreadyAchieved = achievements.some(
-  //       (a) => a.title === updatedGoal.title
-  //     );
-  //     if (!alreadyAchieved) {
-  //       setAchievements([
-  //         ...achievements,
-  //         {
-  //           id: achievements.length + 1,
-  //           title: updatedGoal.title,
-  //           description: updatedGoal.description,
-  //           date: new Date().toISOString().split("T")[0],
-  //           type: updatedGoal.category,
-  //         },
-  //       ]);
-  //       toast.success("Goal moved to achievements!");
-  //     }
-  //   }
-
-  //   setEditingGoal(null);
-  //   toast.success("Goal updated successfully!");
-  // };
   
   const handleDeleteGoal = async (id) => {
     if (!window.confirm('Are you sure you want to delete this goal?')) return;
