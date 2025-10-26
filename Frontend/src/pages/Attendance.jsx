@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Attendance = () => {
   const { user, isHR } = useAuth();
@@ -26,8 +27,9 @@ const Attendance = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('today'); // 'today', 'week', 'month'
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
 
   const [attendanceRecords, setAttendanceRecords] = useState([]); // HR date-based list
   const [attendanceStats, setAttendanceStats] = useState(null);
@@ -35,9 +37,30 @@ const Attendance = () => {
   const [loading, setLoading] = useState(false);
 
   const isoDate = (d) => {
-    const dd = new Date(d);
-    return new Date(dd.getTime() - dd.getTimezoneOffset()*60000).toISOString().slice(0,10);
+    // local YYYY-MM-DD (avoid timezone-induced off-by-one)
+    try {
+      const dd = new Date(d);
+      const y = dd.getFullYear();
+      const m = String(dd.getMonth() + 1).padStart(2, '0');
+      const day = String(dd.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    } catch (e) {
+      return String(d).slice(0,10);
+    }
   };
+  
+  // Normalize a record.date into YYYY-MM-DD without timezone ambiguity.
+  const normalizeRecordDate = (recDate) => {
+    if (!recDate && recDate !== 0) return null;
+    // If it's already a YYYY-MM-DD string, return as-is
+    if (typeof recDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(recDate)) return recDate;
+    // Otherwise, fall back to isoDate which formats local date
+    return isoDate(recDate);
+  };
+
+  // Loading flags for requests to avoid double clicks
+  const [checkInLoading, setCheckInLoading] = useState(false);
+  const [checkOutLoading, setCheckOutLoading] = useState(false);
 
   const fetchByDate = async (dateObj) => {
     if (!token || !isHR) return;
@@ -140,12 +163,32 @@ const Attendance = () => {
   };
 
   const handleMarkAttendance = async () => {
+    if (checkInLoading) return;
+    setCheckInLoading(true);
     try {
-      await axios.post(`${API_BASE}/api/attendance/check-in`, { location: 'Office' }, {
+      const res = await axios.post(`${API_BASE}/api/attendance/check-in`, { location: 'Office' }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Attendance marked successfully!');
-      fetchMyHistory();
+      const newRec = res.data?.data;
+      const today = isoDate(new Date());
+      if (newRec) {
+        setUserAttendance(prev => {
+          try {
+            const idx = prev.findIndex(r => normalizeRecordDate(r?.date) === today);
+            if (idx !== -1) {
+              const copy = [...prev];
+              copy[idx] = { ...copy[idx], ...newRec };
+              return copy;
+            }
+            return [newRec, ...prev];
+          } catch (e) { return prev; }
+        });
+        setCheckedOutToday(!!(newRec.checkOut));
+      } else {
+        await fetchMyHistory();
+      }
+      // server-side activity will create the activity; no client post to avoid duplicates
       if (isHR) {
         fetchByDate(selectedDate);
         await refreshStats(selectedDate);
@@ -153,16 +196,38 @@ const Attendance = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to mark attendance');
+    } finally {
+      setCheckInLoading(false);
     }
   };
 
   const handleCheckOut = async () => {
+    if (checkOutLoading) return;
+    setCheckOutLoading(true);
     try {
-      await axios.post(`${API_BASE}/api/attendance/check-out`, {}, {
+      const res = await axios.post(`${API_BASE}/api/attendance/check-out`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Checked out successfully!');
-      fetchMyHistory();
+      const updated = res.data?.data;
+      const today = isoDate(new Date());
+      if (updated) {
+        setUserAttendance(prev => {
+          try {
+            const idx = prev.findIndex(r => normalizeRecordDate(r?.date) === today);
+            if (idx !== -1) {
+              const copy = [...prev];
+              copy[idx] = { ...copy[idx], ...updated };
+              return copy;
+            }
+            return [updated, ...prev];
+          } catch (e) { return prev; }
+        });
+        setCheckedOutToday(true);
+      } else {
+        await fetchMyHistory();
+      }
+      // server-side activity will create the activity; no client post to avoid duplicates
       if (isHR) {
         fetchByDate(selectedDate);
         await refreshStats(selectedDate);
@@ -170,13 +235,15 @@ const Attendance = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to check out');
+    } finally {
+      setCheckOutLoading(false);
     }
   };
 
   // Personal today's status for non-HR user
   const myTodayStatus = useMemo(() => {
-    const todayStr = isoDate(selectedDate);
-    const rec = userAttendance.find(r => r.date === todayStr);
+    const todayStrLocal = isoDate(selectedDate);
+    const rec = userAttendance.find(r => normalizeRecordDate(r?.date) === todayStrLocal);
     return rec?.status || 'absent';
   }, [userAttendance, selectedDate]);
 
@@ -294,7 +361,7 @@ const Attendance = () => {
 
   // Helpers for button states (today)
   const todayStr = isoDate(new Date());
-  const todayRec = useMemo(() => userAttendance.find(r => r.date === todayStr), [userAttendance, todayStr]);
+  const todayRec = useMemo(() => userAttendance.find(r => normalizeRecordDate(r?.date) === todayStr), [userAttendance, todayStr]);
 
   // Track if checked out today for button color
   const [checkedOutToday, setCheckedOutToday] = useState(false);
@@ -563,13 +630,13 @@ const Attendance = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Check In</p>
                     <p className="text-2xl font-bold text-success">{
-                      (userAttendance.find(r => r.date === isoDate(new Date()))?.checkIn) || '--'
+                      (todayRec?.checkIn) || '--'
                     }</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Working Hours</p>
                     <p className="text-2xl font-bold text-primary">{
-                      (userAttendance.find(r => r.date === isoDate(new Date()))?.workingHours) || '0h 00m'
+                      (todayRec?.workingHours) || '0h 00m'
                     }</p>
                   </div>
                 </div>
@@ -577,7 +644,7 @@ const Attendance = () => {
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="w-5 h-5 text-success" />
                     <span className="font-medium">{
-                      (userAttendance.find(r => r.date === isoDate(new Date()))?.status || 'Present')
+                      (todayRec?.status || 'Present')
                     }</span>
                   </div>
                   <Badge variant="outline">Office</Badge>
