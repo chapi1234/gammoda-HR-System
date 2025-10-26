@@ -15,6 +15,7 @@ import {
   ChevronLeft, ChevronRight, Filter, Search, X 
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Calendar = () => {
   const { user, isHR } = useAuth();
@@ -39,7 +40,7 @@ const Calendar = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
   const toYMD = (d) => {
