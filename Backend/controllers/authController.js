@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import Employee from "../models/Employee.js";
+import Department from "../models/Department.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import getLoginMailOptions from "../Email/login.js";
@@ -7,39 +8,31 @@ import getRegisterMailOptions from "../Email/register.js";
 import getPasswordResetMailOptions from "../Email/password.js";
 import getPasswordChangeConfirmationMailOptions from "../Email/passwordReset.js";
 import transporter from "../Email/nodemailer.js";
+import { recalcDepartmentStats } from "../utils/departmentStats.js";
 
 export const register = async (req, res) => {
   try {
-    const { name, email, role, department, password, confirmPassword } =
-      req.body;
+    const { name, email, role, department, departmentId, password, confirmPassword, avatar } = req.body;
 
-    if (
-      !name ||
-      !email ||
-      !role ||
-      !department ||
-      !password ||
-      !confirmPassword
-    ) {
-      return res.status(400).json({
-        status: false,
-        message: "All fields are required",
-      });
-    } 
+    if (!name || !email || !role || !password || !confirmPassword || (!department && !departmentId)) {
+      return res.status(400).json({ status: false, message: "All fields are required" });
+    }
 
-    const employee = await Employee.findOne({ email });
-    if (employee) {
-      return res.status(400).json({
-        status: false,
-        message: "Employee already exist",
-      });
+    const existing = await Employee.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ status: false, message: "Employee already exist" });
     }
 
     if (password !== confirmPassword) {
-      return res.status(400).json({
-        status: false,
-        message: "Passwords do not match",
-      });
+      return res.status(400).json({ status: false, message: "Passwords do not match" });
+    }
+
+    // Resolve department document
+    let depDoc = null;
+    if (departmentId) depDoc = await Department.findById(departmentId);
+    else if (department) depDoc = await Department.findOne({ name: department });
+    if (!depDoc) {
+      return res.status(400).json({ status: false, message: "Invalid department" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -49,17 +42,21 @@ export const register = async (req, res) => {
       name,
       email,
       role,
-      department,
+      department: depDoc._id,
       password: hashedPassword,
+      profileImage: avatar,
     });
     await user.save();
+
+    // Increment department count
+  await Department.findByIdAndUpdate(depDoc._id, { $inc: { employeeCount: 1 } });
+  // Recalculate stats (avg salary may remain zero if no salary set yet)
+  await recalcDepartmentStats(depDoc._id);
 
     const token = jwt.sign(
       { _id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
     transporter.sendMail(
@@ -72,25 +69,26 @@ export const register = async (req, res) => {
         }
       }
     );
+
+    // Return populated user for client convenience
+    const populated = await Employee.findById(user._id).populate({ path: 'department', select: 'name' });
+
     res.status(201).json({
       status: true,
       message: "Employee registered successfully",
       data: {
-        user,
+        user: populated,
         token,
       },
     });
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "Internal server error" + error });
+    res.status(500).json({ status: false, message: "Internal server error" });
   }
 };
 
-
 export const login = async (req, res) => {
   const { email, password, role } = req.body;
-  try{
+  try {
     if (!email || !password || !role) {
       return res.status(400).json({
         status: false,
@@ -102,7 +100,15 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         status: false,
-        message: "User doesn't exists",
+        message: "User doesn't exist",
+      });
+    }
+
+    // Check if role matches
+    if (user.role !== role) {
+      return res.status(403).json({
+        status: false,
+        message: `Role mismatch. You are registered as '${user.role}'.`,
       });
     }
 
@@ -122,13 +128,16 @@ export const login = async (req, res) => {
       }
     );
 
-    transporter.sendMail(getLoginMailOptions(user.email, user.name), (err, info) => {
-      if (err) {
-        console.error("Error sending email:", err);
-      } else {
-        console.log("Email sent:", info.response);
+    transporter.sendMail(
+      getLoginMailOptions(user.email, user.name),
+      (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
       }
-    });
+    );
 
     res.status(200).json({
       status: true,
@@ -138,15 +147,13 @@ export const login = async (req, res) => {
         token,
       },
     });
-
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Internal server error" + error
-    })
+      message: "Internal server error" + error,
+    });
   }
-}
-
+};
 
 export const forgetPasswordRequest = async (req, res) => {
   const { email } = req.body;
@@ -174,13 +181,16 @@ export const forgetPasswordRequest = async (req, res) => {
     user.otpExpiry = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    transporter.sendMail(getPasswordResetMailOptions(user.email, user.name, user.otp), (err, info) => {
-      if (err) {
-        console.error("Error sending email:", err);
-      } else {
-        console.log("Email sent:", info.response);
+    transporter.sendMail(
+      getPasswordResetMailOptions(user.email, user.name, user.otp),
+      (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
       }
-    });
+    );
 
     res.status(200).json({
       status: true,
@@ -194,52 +204,6 @@ export const forgetPasswordRequest = async (req, res) => {
   }
 };
 
-// Function to verify OTP
-// export const verifyOTP = async (req, res) => {
-//   const { email, otp } = req.body;
-//   try {
-//     if (!email || !otp) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "Email and OTP are required",
-//       });
-//     }
-
-//     const user = await Employee.findOne({ email });
-//     if (!user) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "User doesn't exist",
-//       });
-//     }
-
-//     if (user.otp !== otp || user.otpExpiry < Date.now()) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "Invalid or expired OTP",
-//       });
-//     }
-
-//     // Clear OTP after successful verification
-//     user.otp = undefined;
-//     user.otpExpiry = undefined;
-//     await user.save();
-
-//     // Generate a secure reset token (valid for 15 minutes)
-//     const resetToken = jwt.sign({ _id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
-
-//     res.status(200).json({
-//       status: true,
-//       message: "OTP verified successfully",
-//       resetToken, // Send this to the frontend to use in the reset password request
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       status: false,
-//       message: "Internal server error: " + error,
-//     });
-//   }
-// };
 export const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
   try {
@@ -261,7 +225,10 @@ export const verifyOTP = async (req, res) => {
     console.log("DB OTP:", user.otp, "Received OTP:", otp);
 
     // safer: cast to string and trim
-    if (String(user.otp) !== String(otp).trim() || user.otpExpiry < Date.now()) {
+    if (
+      String(user.otp) !== String(otp).trim() ||
+      user.otpExpiry < Date.now()
+    ) {
       return res.status(400).json({
         status: false,
         message: "Invalid or expired OTP",
@@ -293,7 +260,6 @@ export const verifyOTP = async (req, res) => {
     });
   }
 };
-
 
 export const resetPassword = async (req, res) => {
   const { resetToken, newPassword, confirmNewPassword } = req.body;
@@ -336,13 +302,16 @@ export const resetPassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    transporter.sendMail(getPasswordChangeConfirmationMailOptions(user.email, user.name), (err, info) => {
-      if (err) {
-        console.error("Error sending email:", err);
-      } else {
-        console.log("Email sent:", info.response);
+    transporter.sendMail(
+      getPasswordChangeConfirmationMailOptions(user.email, user.name),
+      (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
       }
-    });
+    );
 
     res.status(200).json({
       status: true,
@@ -355,7 +324,6 @@ export const resetPassword = async (req, res) => {
     });
   }
 };
-
 
 export const changePassword = async (req, res) => {
   const { id } = req.params;
@@ -397,13 +365,16 @@ export const changePassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    transporter.sendMail(getPasswordChangeConfirmationMailOptions(user.email, user.name), (err, info) => {
-      if (err) {
-        console.error("Error sending email:", err);
-      } else {
-        console.log("Email sent:", info.response);
+    transporter.sendMail(
+      getPasswordChangeConfirmationMailOptions(user.email, user.name),
+      (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
       }
-    });
+    );
 
     res.status(200).json({
       status: true,
