@@ -18,6 +18,7 @@ import {
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Salary = () => {
   const { isHR, user } = useAuth();
@@ -32,7 +33,7 @@ const Salary = () => {
     const fetchPayrolls = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const apiBase = 'http://localhost:5000';
+        const apiBase = API_URL;
         const res = await axios.get(`${apiBase}/api/payroll/`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.data && res.data.data) {
           const mapped = res.data.data.map(p => ({
@@ -60,7 +61,7 @@ const Salary = () => {
     const fetchEmployees = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const apiBase = 'http://localhost:5000';
+        const apiBase = API_URL;
         const res = await axios.get(`${apiBase}/api/employees`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.data && res.data.data) setEmployees(res.data.data);
       } catch (err) {
@@ -71,7 +72,7 @@ const Salary = () => {
     // fetch public department list (no auth required)
     const fetchDepartments = async () => {
       try {
-        const apiBase = 'http://localhost:5000';
+        const apiBase = API_URL;
         const res = await axios.get(`${apiBase}/api/departments/public-list`);
         if (res.data && res.data.data) {
           const names = res.data.data.map(d => d.name);
@@ -133,7 +134,8 @@ const Salary = () => {
         deductions: Number(newSalary.deductions || 0),
         payDate: newSalary.payDate
       };
-      const res = await axios.post(`http://localhost:5000/api/payroll`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      const apiBase = API_URL;
+      const res = await axios.post(`${apiBase}/api/payroll`, payload, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data && res.data.data) {
         const p = res.data.data;
         const mapped = {
@@ -179,7 +181,7 @@ const Salary = () => {
         return;
       }
       try {
-        const apiBase = 'http://localhost:5000';
+        const apiBase = API_URL;
         const token = localStorage.getItem('authToken');
         const payload = {
           baseSalary: Number(editingSalary.baseSalary),
@@ -220,7 +222,7 @@ const Salary = () => {
     // Call backend to delete payroll and update UI
     (async () => {
       try {
-        const apiBase = 'http://localhost:5000';
+        const apiBase = API_URL;
         const token = localStorage.getItem('authToken');
         const res = await axios.delete(`${apiBase}/api/payroll/${id}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.data && res.data.status) {
@@ -238,7 +240,7 @@ const Salary = () => {
 
   const handleMarkAsPaid = async (id) => {
     try {
-      const apiBase = 'http://localhost:5000';
+      const apiBase = API_URL;
       const token = localStorage.getItem('authToken');
       const res = await axios.patch(`${apiBase}/api/payroll/${id}`, { status: 'paid' }, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data && res.data.data) {
