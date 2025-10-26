@@ -301,7 +301,7 @@ const Salary = () => {
                 Add Salary Record
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
               <DialogHeader>
                 <DialogTitle>Add Salary Record</DialogTitle>
                 <DialogDescription>Create a new salary record for an employee</DialogDescription>
@@ -556,7 +556,7 @@ const Salary = () => {
 
       {/* Edit Salary Dialog */}
       <Dialog open={!!editingSalary} onOpenChange={(open) => !open && setEditingSalary(null)}>
-        <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+        <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
           <DialogHeader>
             <DialogTitle>Edit Salary Record</DialogTitle>
             <DialogDescription>Update salary information for this employee</DialogDescription>

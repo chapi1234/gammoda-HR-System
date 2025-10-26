@@ -351,7 +351,7 @@ const Recruitment = () => {
               </Button>
             </DialogTrigger>
             <DialogContent
-              className="max-w-2xl"
+              // className="max-w-2xl"
               style={{ maxHeight: "90vh", overflowY: "auto" }}
             >
               <DialogHeader>

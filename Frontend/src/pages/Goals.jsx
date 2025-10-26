@@ -261,13 +261,13 @@ const Goals = () => {
           </Button> */}
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button className="btn-gradient">
+              <Button className="btn-gradient w-full md:w-200px">
                 <Target className="w-4 h-4 mr-2" />
                 Set New Goal
               </Button>
             </DialogTrigger>
             <DialogContent
-              className="max-w-md"
+              // className="max-w-md"
               style={{ maxHeight: "90vh", overflowY: "auto" }}
             >
               <DialogHeader>
@@ -348,7 +348,7 @@ const Goals = () => {
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="dashboard-card">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
@@ -480,7 +480,7 @@ const Goals = () => {
                             Edit Goal
                           </Button>
                           <DialogContent
-                            className="max-w-md"
+                            // className="max-w-md"
                             style={{ maxHeight: "90vh", overflowY: "auto" }}
                           >
                             <DialogHeader>

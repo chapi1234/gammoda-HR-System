@@ -39,13 +39,19 @@ import { toast } from "react-toastify";
 const Profile = () => {
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const getDepartmentName = (dept) => {
+    if (!dept) return "";
+    if (typeof dept === "string") return dept; // may be name or id
+    if (typeof dept === "object" && dept.name) return dept.name;
+    return "";
+  };
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
     address: user?.address || "",
     dateOfBirth: user?.dateOfBirth || "",
-    department: user?.department || "",
+    department: getDepartmentName(user?.department),
     position: user?.position || "",
     joinDate: user?.joinDate || "",
     bio: user?.bio || "",
@@ -248,7 +254,7 @@ const Profile = () => {
               <div className="flex-1">
                 <h2 className="text-2xl font-bold">{user?.name}</h2>
                 <p className="text-muted-foreground">
-                  {user?.position} • {user?.department}
+                  {user?.position} • {getDepartmentName(user?.department)}
                 </p>
                 <div className="flex items-center space-x-2 mt-2">
                   <Badge variant="secondary">

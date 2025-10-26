@@ -214,7 +214,7 @@ const LeaveRequests = () => {
               Request Leave
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+          <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <DialogHeader>
               <DialogTitle>Submit Leave Request</DialogTitle>
               <DialogDescription>Fill in the details for your leave request</DialogDescription>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,77 +9,124 @@ import {
   TrendingUp, Building2, Clock, CreditCard 
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+import { postActivity } from '../lib/postActivity';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Payslips = () => {
   const { user } = useAuth();
-  const [payslips] = useState([
-    {
-      id: 1,
-      month: 'August 2024',
-      period: 'Aug 1 - Aug 31, 2024',
-      grossSalary: 5200,
-      netSalary: 4368,
-      deductions: 832,
-      status: 'paid',
-      payDate: '2024-08-31',
-      downloadUrl: '#'
-    },
-    {
-      id: 2,
-      month: 'July 2024',
-      period: 'Jul 1 - Jul 31, 2024',
-      grossSalary: 5200,
-      netSalary: 4368,
-      deductions: 832,
-      status: 'paid',
-      payDate: '2024-07-31',
-      downloadUrl: '#'
-    },
-    {
-      id: 3,
-      month: 'June 2024',
-      period: 'Jun 1 - Jun 30, 2024',
-      grossSalary: 5000,
-      netSalary: 4200,
-      deductions: 800,
-      status: 'paid',
-      payDate: '2024-06-30',
-      downloadUrl: '#'
-    },
-    {
-      id: 4,
-      month: 'May 2024',
-      period: 'May 1 - May 31, 2024',
-      grossSalary: 5000,
-      netSalary: 4200,
-      deductions: 800,
-      status: 'paid',
-      payDate: '2024-05-31',
-      downloadUrl: '#'
-    },
-    {
-      id: 5,
-      month: 'April 2024',
-      period: 'Apr 1 - Apr 30, 2024',
-      grossSalary: 4800,
-      netSalary: 4032,
-      deductions: 768,
-      status: 'paid',
-      payDate: '2024-04-30',
-      downloadUrl: '#'
-    }
-  ]);
+  const [payslips, setPayslips] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const currentPayslip = payslips[0];
+  useEffect(() => {
+    const loadPayslips = async () => {
+      setLoading(true);
+      try {
+        const apiBase = API_URL;
+        const token = localStorage.getItem('authToken');
+        const res = await axios.get(`${apiBase}/api/payslips`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.data) {
+          const mapped = res.data.data.map(p => ({
+            id: p._id,
+            month: p.month || (p.payDate ? new Date(p.payDate).toLocaleString('default', { month: 'long', year: 'numeric' }) : ''),
+            period: p.period || `${p.periodStart || ''} - ${p.periodEnd || ''}`,
+            grossSalary: p.grossSalary || 0,
+            netSalary: p.netSalary || 0,
+            deductions: p.deductions || 0,
+            status: p.status || 'paid',
+            payDate: p.payDate || null,
+            downloadUrl: p.downloadUrl || null,
+            raw: p
+          }));
+          setPayslips(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load payslips', err);
+        toast.error('Failed to load payslips');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPayslips();
+  }, []);
+
+  const currentPayslip = payslips[0] || { month: '', period: '', grossSalary: 0, deductions: 0, netSalary: 0, payDate: null };
 
   const handleDownload = (payslip) => {
-    toast.success(`Downloading payslip for ${payslip.month}`);
-    // Simulate download
+    // If payslip has a downloadUrl (stored in DB), open it. Otherwise attempt to fetch the payslip record.
+    if (payslip.downloadUrl) {
+      window.open(payslip.downloadUrl, '_blank');
+      try {
+        postActivity({ token: localStorage.getItem('authToken'), actor: user?.id || user?._id, action: 'Downloaded payslip', type: 'payslip', meta: { id: payslip.id } });
+      } catch (e) { /* ignore */ }
+      return;
+    }
+    (async () => {
+      try {
+        const apiBase = API_URL;
+        const token = localStorage.getItem('authToken');
+        const res = await axios.get(`${apiBase}/api/payslips/${payslip.id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.data) {
+          const record = res.data.data;
+          if (record.downloadUrl) {
+            window.open(record.downloadUrl, '_blank');
+            try {
+              postActivity({ token: localStorage.getItem('authToken'), actor: user?.id || user?._id, action: 'Downloaded payslip', type: 'payslip', meta: { id: payslip.id } });
+            } catch (e) { /* ignore */ }
+          } else {
+            // No file available
+            toast.info('No downloadable file for this payslip');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching payslip for download', err);
+        toast.error('Failed to download payslip');
+      }
+    })();
   };
 
   const handleView = (payslip) => {
-    toast.info(`Opening payslip for ${payslip.month}`);
-    // Simulate view
+    // Fetch payslip details and open in a new window or show a console preview for now
+    (async () => {
+      try {
+        const apiBase = API_URL;
+        const token = localStorage.getItem('authToken');
+        const res = await axios.get(`${apiBase}/api/payslips/${payslip.id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.data) {
+          // For now open a simple JSON view in a new tab
+          const w = window.open('', '_blank');
+          w.document.write('<pre>' + JSON.stringify(res.data.data, null, 2) + '</pre>');
+          try {
+            postActivity({ token, actor: user?.id || user?._id, action: 'Viewed payslip', type: 'payslip', meta: { id: payslip.id } });
+          } catch (e) { /* ignore */ }
+        }
+      } catch (err) {
+        console.error('Error fetching payslip', err);
+        toast.error('Failed to open payslip');
+      }
+    })();
+  };
+
+  const handleDeletePayslip = (id) => {
+    (async () => {
+      try {
+        const apiBase = API_URL;
+        const token = localStorage.getItem('authToken');
+        const res = await axios.delete(`${apiBase}/api/payslips/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.data && res.data.status) {
+          setPayslips(payslips.filter(p => p.id !== id));
+          toast.success('Payslip deleted');
+          try {
+            postActivity({ token, actor: user?.id || user?._id, action: 'Deleted payslip', type: 'payslip', meta: { id } });
+          } catch (e) { /* ignore */ }
+        } else {
+          toast.error('Failed to delete payslip');
+        }
+      } catch (err) {
+        console.error('Error deleting payslip', err);
+        toast.error(err.response?.data?.message || 'Error deleting payslip');
+      }
+    })();
   };
 
   const salaryBreakdown = [
@@ -235,6 +282,11 @@ const Payslips = () => {
                       >
                         <Download className="w-4 h-4" />
                       </Button>
+                      {user?.role === 'hr' && (
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeletePayslip(payslip.id)}>
+                          <FileText className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

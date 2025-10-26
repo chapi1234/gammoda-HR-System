@@ -222,7 +222,7 @@ const Employees = () => {
               Add Employee
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+          <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <DialogHeader>
               <DialogTitle>Add New Employee</DialogTitle>
               <DialogDescription>Enter employee details to add them to the system.</DialogDescription>
@@ -557,7 +557,7 @@ const Employees = () => {
 
       {/* Edit Employee Dialog */}
       <Dialog open={!!editingEmployee} onOpenChange={(open) => !open && setEditingEmployee(null)}>
-        <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+        <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
           <DialogHeader>
             <DialogTitle>Edit Employee</DialogTitle>
             <DialogDescription>Update employee information.</DialogDescription>
