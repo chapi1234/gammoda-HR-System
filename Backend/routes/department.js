@@ -1,21 +1,25 @@
 import express from "express";
 import {
-  getDepartments,
+  getAllDepartments,
   getDepartmentById,
   createDepartment,
   updateDepartment,
   deleteDepartment,
-  searchDepartments
+  searchDepartments,
+  getDepartmentsPublicList,
 } from "../controllers/departmentController.js";
 import authorize from "../middlewares/authorize.js";
 
 const router = express.Router();
 
-router.get("/", authorize(["hr", "admin"]), getDepartments);
-router.get("/:id", authorize(["hr", "admin"]), getDepartmentById);
+// Place search before dynamic :id to avoid route shadowing
+// Public minimal list for unauthenticated clients
+router.get("/public-list", getDepartmentsPublicList);
+router.get("/", authorize(["hr", "admin", "employee"]), getAllDepartments);
+router.get("/search", authorize(["hr", "admin", "employee"]), searchDepartments);
+router.get("/:id", authorize(["hr", "admin", "employee"]), getDepartmentById);
 router.post("/", authorize(["hr", "admin"]), createDepartment);
 router.put("/:id", authorize(["hr", "admin"]), updateDepartment);
 router.delete("/:id", authorize(["hr", "admin"]), deleteDepartment);
-router.get("/search", authorize(["hr", "admin"]), searchDepartments);
 
 export default router;

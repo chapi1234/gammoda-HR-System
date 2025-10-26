@@ -7,6 +7,7 @@ import {
   resetPassword,
   changePassword,
 } from "../controllers/authController.js"; 
+import authorize from "../middlewares/authorize.js";
 
 const router = express.Router();
 
@@ -15,6 +16,6 @@ router.post("/login", login);
 router.post("/forget-password", forgetPasswordRequest);
 router.post("/verify-otp", verifyOTP);
 router.post("/reset-password", resetPassword);
-router.put("/change-password/:id", changePassword);
+router.put("/change-password/:id", authorize(['employee', 'hr']), changePassword);
 
 export default router;
