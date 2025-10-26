@@ -14,6 +14,7 @@ import {
   TrendingUp, Search, MoreHorizontal
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Departments = () => {
   const { isHR } = useAuth();
@@ -31,7 +32,7 @@ const Departments = () => {
     budget: ''
   });
 
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
   const fetchDepartments = async () => {
