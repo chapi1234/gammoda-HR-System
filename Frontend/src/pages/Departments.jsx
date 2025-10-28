@@ -152,7 +152,10 @@ const Departments = () => {
               Add Department
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+
+          {/* <..................Add department dialog content ..................................> */}
+
+          <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <DialogHeader>
               <DialogTitle>Add New Department</DialogTitle>
               <DialogDescription>Create a new department in your organization.</DialogDescription>
@@ -385,7 +388,7 @@ const Departments = () => {
 
       {/* Edit Department Dialog */}
       <Dialog open={!!editingDepartment} onOpenChange={(open) => !open && setEditingDepartment(null)}>
-        <DialogContent className="max-w-md" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+        <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
           <DialogHeader>
             <DialogTitle>Edit Department</DialogTitle>
             <DialogDescription>Update department information.</DialogDescription>
