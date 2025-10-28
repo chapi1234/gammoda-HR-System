@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from 'axios';
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -75,46 +76,63 @@ const Recruitment = () => {
   const [isEditingJob, setIsEditingJob] = useState(false);
   const [editJobData, setEditJobData] = useState({});
 
-  // Mock job postings data
-  const [jobPostings, setJobPostings] = useState([
-    {
-      id: 1,
-      title: "Senior Frontend Developer",
-      department: "Engineering",
-      location: "Arbaminch, AM",
-      type: "Full-time",
-      salary: "$90,000 - $120,000",
-      status: "active",
-      postedDate: "2025-01-15",
-      applications: 12,
-      description:
-        "We are looking for an experienced frontend developer to join our team...",
-    },
-    {
-      id: 2,
-      title: "Marketing Manager",
-      department: "Marketing",
-      location: "Addis Ababa, AA",
-      type: "Full-time",
-      salary: "$70,000 - $90,000",
-      status: "active",
-      postedDate: "2025-01-10",
-      applications: 8,
-      description: "Lead our marketing initiatives and drive brand growth...",
-    },
-    {
-      id: 3,
-      title: "Sales Executive",
-      department: "Sales",
-      location: "Chencha, IL",
-      type: "Full-time",
-      salary: "$60,000 - $80,000",
-      status: "closed",
-      postedDate: "2025-01-05",
-      applications: 15,
-      description: "Join our sales team and help us expand our client base...",
-    },
-  ]);
+  // job postings will be loaded from backend
+  const [jobPostings, setJobPostings] = useState([]);
+
+  // API base (with safe fallback)
+  const API_URL = import.meta.env.VITE_API_URL;
+  const API_BASE = API_URL;
+
+  // departments will be loaded from backend
+  const [departments, setDepartments] = useState([]);
+  const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
+
+  // Load jobs from backend
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/api/jobs`);
+        if (!mounted) return;
+          if (res.data && Array.isArray(res.data.data)) {
+          const jobs = res.data.data.map((j) => {
+            // department can be populated object, string name, or id
+            let deptName = "";
+            if (j.department) {
+              if (typeof j.department === "object") {
+                deptName = j.department.name || j.department.label || "";
+              } else if (typeof j.department === "string") {
+                // try to resolve from loaded departments (support id/_id/name)
+                const found = departments.find((d) => (d._id === j.department || d.id === j.department || d.name === j.department));
+                deptName = found ? found.name : j.department;
+              }
+            }
+
+            const salary = j.salaryRange
+              ? `${j.salaryRange.min || ""} - ${j.salaryRange.max || ""}`
+              : j.salary || "";
+
+            return {
+              id: j._id || j.id,
+              title: j.title,
+              department: deptName,
+              location: j.location || "",
+              type: j.jobType || "",
+              salary,
+              status: j.status || "active",
+              postedDate: j.postedDate || j.createdAt || new Date().toISOString(),
+              applications: Array.isArray(j.applications) ? j.applications.length : (j.applicationsCount || 0),
+              description: j.description || "",
+            };
+          });
+          setJobPostings(jobs);
+        }
+      } catch (err) {
+        console.error("Failed to load jobs", err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [API_BASE, departments]);
 
   // Mock applicants data
   const [applicants, setApplicants] = useState([
@@ -208,15 +226,32 @@ const Recruitment = () => {
     "rejected",
     "hired",
   ];
-  const departments = [
-    "Engineering",
-    "Marketing",
-    "Sales",
-    "Human Resources",
-    "Finance",
-    "Operations",
-  ];
-  const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
+  
+
+  // Load departments from backend public list
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/api/departments/public-list`);
+        if (!mounted) return;
+        if (res.data && res.data.data) {
+          // expect an array of objects; normalize to { id, name }
+          const normalized = res.data.data.map((d) => ({
+            _id: d._id || d.id || d._id?.toString?.() || d.name,
+            id: d.id || d._id || d.name,
+            name: d.name || d.label || d._id || d.id || String(d),
+          }));
+          setDepartments(normalized);
+        }
+      } catch (err) {
+        console.error('Failed to load departments', err);
+        // fallback to an empty array
+        if (mounted) setDepartments([]);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [API_BASE]);
 
   const filteredJobs = jobPostings.filter((job) => {
     const matchesSearch =
@@ -242,25 +277,54 @@ const Recruitment = () => {
       return;
     }
 
-    const job = {
-      ...newJob,
-      id: jobPostings.length + 1,
-      status: "active",
-      postedDate: new Date().toISOString().split("T")[0],
-      applications: 0,
-    };
-
-    setJobPostings([...jobPostings, job]);
-    setNewJob({
-      title: "",
-      department: "",
-      location: "",
-      type: "",
-      salary: "",
-      description: "",
-    });
-    setShowJobDialog(false);
-    toast.success("Job posting created successfully!");
+    (async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const payload = {
+          title: newJob.title,
+          department: newJob.department,
+          description: newJob.description,
+          requirements: newJob.requirements || [],
+          location: newJob.location,
+          salary: newJob.salary,
+          jobType: newJob.type,
+          status: 'active',
+        };
+        const res = await axios.post(`${API_BASE}/api/jobs`, payload, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.data && res.data.data) {
+          const j = res.data.data;
+          // find department name from loaded departments if department is an id
+          const deptName =
+            departments.find((d) => (d._id === newJob.department || d.id === newJob.department || d.name === newJob.department))?.name ||
+            newJob.department;
+          const uiJob = {
+            id: j._id || j.id,
+            title: j.title,
+            department: deptName,
+            location: j.location || newJob.location,
+            type: j.jobType || newJob.type,
+            salary:
+              newJob.salary ||
+              (j.salaryRange ? `${j.salaryRange.min || ''} - ${j.salaryRange.max || ''}` : ""),
+            status: j.status || 'active',
+            postedDate: j.postedDate || new Date().toISOString(),
+            applications: Array.isArray(j.applications) ? j.applications.length : 0,
+            description: j.description,
+          };
+          setJobPostings(prev => [uiJob, ...prev]);
+          setNewJob({ title: '', department: '', location: '', type: '', salary: '', description: '' });
+          setShowJobDialog(false);
+          toast.success('Job posting created successfully!');
+        } else {
+          toast.error('Failed to create job');
+        }
+      } catch (err) {
+        console.error('Create job error', err);
+        toast.error(err?.response?.data?.message || 'Failed to create job');
+      }
+    })();
   };
 
   const handleApplicantAction = (id, status) => {
@@ -273,8 +337,12 @@ const Recruitment = () => {
   };
 
   const handleViewJobDetails = (job) => {
+    // when opening the details for edit, try to map department name -> id
+    const deptId = departments.find(
+      (d) => d.name === job.department || d._id === job.department || d.id === job.department
+    )?._id || departments.find((d) => d.name === job.department)?.id || job.department;
     setSelectedJob(job);
-    setEditJobData(job);
+    setEditJobData({ ...job, department: deptId });
     setIsEditingJob(false);
     setShowJobDetailDialog(true);
   };
@@ -283,13 +351,66 @@ const Recruitment = () => {
     setIsEditingJob(true);
   };
 
-  const handleSaveJobEdit = () => {
-    setJobPostings((prev) =>
-      prev.map((job) => (job.id === selectedJob.id ? { ...editJobData } : job))
-    );
-    setSelectedJob(editJobData);
-    setIsEditingJob(false);
-    toast.success("Job updated successfully!");
+  const handleSaveJobEdit = async () => {
+    if (!selectedJob) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      // Prepare payload: prefer department id if available
+      const deptValue = editJobData.department;
+      // If department is a name, try to find id
+      const deptId =
+        departments.find((d) => d._id === deptValue || d.id === deptValue || d.name === deptValue)?._id ||
+        deptValue;
+
+      const payload = {
+        title: editJobData.title,
+        department: deptId,
+        location: editJobData.location,
+        jobType: editJobData.type,
+        salary: editJobData.salary,
+        description: editJobData.description,
+        status: editJobData.status || selectedJob.status,
+      };
+
+      const res = await axios.patch(`${API_BASE}/api/jobs/${selectedJob.id}`, payload, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (res.data && res.data.data) {
+        const j = res.data.data;
+        // resolve department name for UI
+        const deptName =
+          departments.find((d) => d._id === (j.department || deptId) || d.id === (j.department || deptId) || d.name === (j.department || deptId))?.name ||
+          (typeof j.department === "object" ? j.department.name : j.department) ||
+          editJobData.department;
+
+        const updatedJob = {
+          id: j._id || j.id,
+          title: j.title || editJobData.title,
+          department: deptName,
+          location: j.location || editJobData.location,
+          type: j.jobType || editJobData.type,
+          salary: j.salaryRange
+            ? `${j.salaryRange.min || ""} - ${j.salaryRange.max || ""}`
+            : j.salary || editJobData.salary,
+          status: j.status || editJobData.status || "active",
+          postedDate: j.postedDate || selectedJob.postedDate,
+          applications: Array.isArray(j.applications) ? j.applications.length : (j.applicationsCount || selectedJob.applications || 0),
+          description: j.description || editJobData.description,
+        };
+
+        setJobPostings((prev) => prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)));
+        setSelectedJob(updatedJob);
+        setIsEditingJob(false);
+        toast.success("Job updated successfully!");
+        return;
+      }
+
+      toast.error("Failed to update job");
+    } catch (err) {
+      console.error("Update job error", err);
+      toast.error(err?.response?.data?.message || "Failed to update job");
+    }
   };
 
   const handleCancelEdit = () => {
@@ -386,8 +507,8 @@ const Recruitment = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>
-                            {dept}
+                          <SelectItem key={dept._id || dept.id || dept.name} value={dept._id || dept.id || dept.name}>
+                            {dept.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -838,10 +959,10 @@ const Recruitment = () => {
                           </SelectTrigger>
                           <SelectContent>
                             {departments.map((dept) => (
-                              <SelectItem key={dept} value={dept}>
-                                {dept}
-                              </SelectItem>
-                            ))}
+                                <SelectItem key={dept._id || dept.id || dept.name} value={dept._id || dept.id || dept.name}>
+                                  {dept.name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -874,6 +995,24 @@ const Recruitment = () => {
                                 {type}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Status</Label>
+                        <Select
+                          value={editJobData.status || "active"}
+                          onValueChange={(value) =>
+                            setEditJobData({ ...editJobData, status: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="draft">Draft</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
