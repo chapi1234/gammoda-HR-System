@@ -123,6 +123,12 @@ const Recruitment = () => {
               postedDate: j.postedDate || j.createdAt || new Date().toISOString(),
               applications: Array.isArray(j.applications) ? j.applications.length : (j.applicationsCount || 0),
               description: j.description || "",
+              // requirements: prefer array, fall back to single string in array
+              requirements: Array.isArray(j.requirements)
+                ? j.requirements
+                : j.requirements
+                ? [j.requirements]
+                : [],
             };
           });
           setJobPostings(jobs);
@@ -215,6 +221,9 @@ const Recruitment = () => {
     type: "",
     salary: "",
     description: "",
+    // requirements stored as an array of strings
+    requirements: [],
+    requirementsRaw: "",
   });
 
   const statusOptions = ["all", "active", "closed", "draft"];
@@ -284,7 +293,12 @@ const Recruitment = () => {
           title: newJob.title,
           department: newJob.department,
           description: newJob.description,
-          requirements: newJob.requirements || [],
+          requirements:
+            newJob.requirements && newJob.requirements.length
+              ? newJob.requirements
+              : newJob.requirementsRaw
+              ? newJob.requirementsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+              : [],
           location: newJob.location,
           salary: newJob.salary,
           jobType: newJob.type,
@@ -312,9 +326,10 @@ const Recruitment = () => {
             postedDate: j.postedDate || new Date().toISOString(),
             applications: Array.isArray(j.applications) ? j.applications.length : 0,
             description: j.description,
+            requirements: Array.isArray(j.requirements) ? j.requirements : (j.requirements ? [j.requirements] : newJob.requirements || []),
           };
           setJobPostings(prev => [uiJob, ...prev]);
-          setNewJob({ title: '', department: '', location: '', type: '', salary: '', description: '' });
+          setNewJob({ title: '', department: '', location: '', type: '', salary: '', description: '', requirements: [], requirementsRaw: '' });
           setShowJobDialog(false);
           toast.success('Job posting created successfully!');
         } else {
@@ -342,7 +357,7 @@ const Recruitment = () => {
       (d) => d.name === job.department || d._id === job.department || d.id === job.department
     )?._id || departments.find((d) => d.name === job.department)?.id || job.department;
     setSelectedJob(job);
-    setEditJobData({ ...job, department: deptId });
+    setEditJobData({ ...job, department: deptId, requirementsRaw: (job.requirements || []).join("\n") });
     setIsEditingJob(false);
     setShowJobDetailDialog(true);
   };
@@ -369,6 +384,12 @@ const Recruitment = () => {
         jobType: editJobData.type,
         salary: editJobData.salary,
         description: editJobData.description,
+        requirements:
+          editJobData.requirements && editJobData.requirements.length
+            ? editJobData.requirements
+            : editJobData.requirementsRaw
+            ? editJobData.requirementsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+            : [],
         status: editJobData.status || selectedJob.status,
       };
 
@@ -397,6 +418,13 @@ const Recruitment = () => {
           postedDate: j.postedDate || selectedJob.postedDate,
           applications: Array.isArray(j.applications) ? j.applications.length : (j.applicationsCount || selectedJob.applications || 0),
           description: j.description || editJobData.description,
+          requirements: Array.isArray(j.requirements)
+            ? j.requirements
+            : editJobData.requirements && editJobData.requirements.length
+            ? editJobData.requirements
+            : editJobData.requirementsRaw
+            ? editJobData.requirementsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+            : [],
         };
 
         setJobPostings((prev) => prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)));
@@ -569,6 +597,26 @@ const Recruitment = () => {
                       setNewJob({ ...newJob, description: e.target.value })
                     }
                     rows={4}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="requirements">Requirements (one per line)</Label>
+                  <Textarea
+                    id="requirements"
+                    placeholder={"e.g. 5+ years experience in React\nStrong TypeScript skills"}
+                    value={newJob.requirementsRaw}
+                    onChange={(e) =>
+                      setNewJob((prev) => ({ ...prev, requirementsRaw: e.target.value }))
+                    }
+                    onBlur={() =>
+                      setNewJob((prev) => ({
+                        ...prev,
+                        requirements: prev.requirementsRaw
+                          ? prev.requirementsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+                          : [],
+                      }))
+                    }
+                    rows={3}
                   />
                 </div>
               </div>
@@ -1026,6 +1074,28 @@ const Recruitment = () => {
                               salary: e.target.value,
                             })
                           }
+                        />
+                      </div>
+                      <div>
+                        <Label>Requirements (one per line)</Label>
+                        <Textarea
+                          value={
+                            editJobData.requirementsRaw !== undefined
+                              ? editJobData.requirementsRaw
+                              : (editJobData.requirements || []).join("\n")
+                          }
+                          onChange={(e) =>
+                            setEditJobData((prev) => ({ ...prev, requirementsRaw: e.target.value }))
+                          }
+                          onBlur={() =>
+                            setEditJobData((prev) => ({
+                              ...prev,
+                              requirements: prev.requirementsRaw
+                                ? prev.requirementsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+                                : (prev.requirements || []),
+                            }))
+                          }
+                          rows={3}
                         />
                       </div>
                     </div>
