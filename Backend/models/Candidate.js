@@ -7,9 +7,20 @@ const applicationSchema = new mongoose.Schema({
     url: String,
   },
   coverLetter: String,
+  experience: Number,
   status: {
     type: String,
-    enum: ["applied", "screening", "interview", "offer", "hired", "rejected"],
+    // include frontend-friendly statuses (under_review, shortlisted)
+    enum: [
+      "applied",
+      "under_review",
+      "shortlisted",
+      "screening",
+      "interview",
+      "offer",
+      "hired",
+      "rejected",
+    ],
     default: "applied",
   },
   score: { type: Number, default: 0 },
@@ -32,14 +43,14 @@ const applicationSchema = new mongoose.Schema({
 
 const candidateSchema = new mongoose.Schema(
   {
-    fullName: { type: String, required: true },
+    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     phone: String,
     password: String,
     gender: {
       type: String,
-      enum: ["male", "female"],
-      default: "male",
+      enum: ["male", "female", "other"],
+      default: "other",
     },
     resume: {
       filename: String,
