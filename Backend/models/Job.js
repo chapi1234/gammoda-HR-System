@@ -12,13 +12,15 @@ const jobSchema = new mongoose.Schema({
   },
   jobType: {
     type: String,
-    enum: ['full-time', 'part-time', 'contract', 'internship'],
-    default: 'full-time'
+    // Keep values human-friendly to match frontend labels (e.g. "Full-time")
+    enum: ['Full-time', 'Part-time', 'Contract', 'Internship'],
+    default: 'Full-time'
   },
   status: {
     type: String,
-    enum: ['open', 'closed', 'on-hold'],
-    default: 'open'
+    // Align status values with frontend filter options (active/closed/draft)
+    enum: ['active', 'closed', 'draft'],
+    default: 'active'
   },
   postedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -29,6 +31,19 @@ const jobSchema = new mongoose.Schema({
   applications: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Candidate'
+  }],
+  // store application details on the job as well (candidate ref + metadata)
+  applicationsDetails: [{
+    candidate: { type: mongoose.Schema.Types.ObjectId, ref: 'Candidate' },
+    resume: {
+      filename: String,
+      url: String,
+    },
+    coverLetter: String,
+    experience: Number,
+    skills: [String],
+    status: { type: String, default: 'applied' },
+    appliedAt: { type: Date, default: Date.now }
   }]
 }, {
   timestamps: true
