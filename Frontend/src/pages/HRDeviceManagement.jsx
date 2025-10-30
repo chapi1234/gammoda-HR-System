@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -27,12 +27,11 @@ import {
   Laptop, Tablet, Smartphone, Monitor, Plus, Search,
   Edit, Trash2, UserPlus, Calendar, MapPin, AlertCircle
 } from 'lucide-react';
+import axios from 'axios';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const HRDeviceManagement = () => {
-  const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
-
   // Dummy employees data
   const employees = [
     { id: 1, name: 'John Smith', email: 'john.smith@company.com', department: 'Engineering' },
@@ -50,6 +49,8 @@ const HRDeviceManagement = () => {
       deviceType: 'laptop',
       model: 'MacBook Pro M2',
       serialNumber: 'MBP2023001',
+      ram: '32GB',
+      storage: '1TB SSD',
       employeeId: 1,
       employeeName: 'John Smith',
       assignedDate: '2023-01-15',
@@ -63,6 +64,8 @@ const HRDeviceManagement = () => {
       deviceType: 'monitor',
       model: 'Dell U2720Q 27"',
       serialNumber: 'DL27001234',
+      ram: 'N/A',
+      storage: 'N/A',
       employeeId: 1,
       employeeName: 'John Smith',
       assignedDate: '2023-01-15',
@@ -76,6 +79,8 @@ const HRDeviceManagement = () => {
       deviceType: 'tablet',
       model: 'iPad Pro 12.9"',
       serialNumber: 'IPD2023002',
+      ram: '8GB',
+      storage: '256GB',
       employeeId: 2,
       employeeName: 'Sarah Johnson',
       assignedDate: '2023-02-10',
@@ -89,6 +94,8 @@ const HRDeviceManagement = () => {
       deviceType: 'phone',
       model: 'iPhone 14 128GB',
       serialNumber: 'IP14001',
+      ram: '6GB',
+      storage: '128GB',
       employeeId: 2,
       employeeName: 'Sarah Johnson',
       assignedDate: '2023-02-10',
@@ -102,6 +109,8 @@ const HRDeviceManagement = () => {
       deviceType: 'laptop',
       model: 'ThinkPad X1 Carbon',
       serialNumber: 'TP2023003',
+      ram: '16GB',
+      storage: '512GB SSD',
       employeeId: 3,
       employeeName: 'Mike Chen',
       assignedDate: '2023-03-05',
@@ -119,6 +128,8 @@ const HRDeviceManagement = () => {
       type: 'laptop',
       model: 'MacBook Air 13"',
       serialNumber: 'MBA2023010',
+      ram: '16GB',
+      storage: '512GB SSD',
       status: 'available',
       condition: 'excellent',
       purchaseDate: '2023-06-01'
@@ -129,6 +140,8 @@ const HRDeviceManagement = () => {
       type: 'tablet',
       model: 'iPad Air 5th Gen',
       serialNumber: 'IPA2023015',
+      ram: '8GB',
+      storage: '256GB',
       status: 'available',
       condition: 'excellent',
       purchaseDate: '2023-05-15'
@@ -139,11 +152,60 @@ const HRDeviceManagement = () => {
       type: 'monitor',
       model: 'Dell S2722DC',
       serialNumber: 'DL27002',
+      ram: 'N/A',
+      storage: 'N/A',
       status: 'available',
       condition: 'good',
       purchaseDate: '2023-04-20'
     },
   ];
+
+  // State management
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
+  const [isEditDeviceOpen, setIsEditDeviceOpen] = useState(false);
+  const [isCreateDeviceOpen, setIsCreateDeviceOpen] = useState(false);
+  const [editingDevice, setEditingDevice] = useState(null);
+  const [devices, setDevices] = useState(deviceAssignments);
+  const [employeesList, setEmployeesList] = useState(employees);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+
+  // assign form state
+  const [assignForm, setAssignForm] = useState({ employeeId: '', deviceId: '', location: '', notes: '' });
+  // create device form
+  const [createForm, setCreateForm] = useState({ name: '', type: 'laptop', brand: '', model: '', serialNumber: '', ram: '', storage: '', purchaseDate: '', condition: 'excellent', notes: '' });
+
+  // Normalize devices coming from server to a consistent shape for the UI
+  const normalizeDevice = (d) => {
+    const id = d._id || d.id;
+    const deviceName = d.deviceName || d.name || '';
+    const deviceType = d.deviceType || d.type || '';
+    const model = d.model || '';
+    const serialNumber = d.serialNumber || d.serial || '';
+    const ram = d.ram || '';
+    const storage = d.storage || '';
+    const employeeId = d.employeeId || (d.assignedTo && (d.assignedTo._id || d.assignedTo)) || null;
+    const employeeName = d.employeeName || (d.assignedTo && d.assignedTo.name) || (employeesList.find(e => String(e._id || e.id) === String(employeeId)) || {}).name || '';
+    const assignedDate = d.assignedDate || d.assignedAt || d.assignedOn || d.assigned || null;
+    const status = d.status || 'available';
+    const location = d.location || '';
+    const condition = d.condition || 'good';
+    return { id, deviceName, deviceType, model, serialNumber, ram, storage, employeeId, employeeName, assignedDate, status, location, condition, raw: d };
+  };
+
+  const normalizedDevices = (devices || []).map(normalizeDevice);
+  const availableFromState = normalizedDevices.filter(d => d.status === 'available');
+
+  const filteredAssignments = normalizedDevices.filter(device =>
+    (String(device.deviceName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(device.employeeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(device.serialNumber || '').toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const getEmployeeDevices = (employeeId) => {
+    return normalizedDevices.filter(device => String(device.employeeId || '') === String(employeeId));
+  };
 
   const getDeviceIcon = (type) => {
     switch (type) {
@@ -190,14 +252,112 @@ const HRDeviceManagement = () => {
     }
   };
 
-  const filteredAssignments = deviceAssignments.filter(device =>
-    device.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    device.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    device.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleEditDevice = (device) => {
+    setEditingDevice(device);
+    setIsEditDeviceOpen(true);
+  };
 
-  const getEmployeeDevices = (employeeId) => {
-    return deviceAssignments.filter(device => device.employeeId === employeeId);
+
+  const handleUpdateDevice = (updatedDevice) => {
+    // call backend to update
+    const token = localStorage.getItem('authToken');
+    axios.put(`${API_BASE}/api/devices/${updatedDevice._id || updatedDevice.id}`, updatedDevice, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        const data = res.data?.data || res.data;
+        setDevices(prev => prev.map(d => (String(d._id || d.id) === String(data._id || data.id) ? data : d)));
+        setIsEditDeviceOpen(false);
+        setEditingDevice(null);
+      })
+      .catch(err => {
+        console.error('Failed to update device', err);
+        // fallback local update
+        setDevices(devices.map(device => device.id === updatedDevice.id ? updatedDevice : device));
+        setIsEditDeviceOpen(false);
+        setEditingDevice(null);
+      });
+  };
+
+  // Fetch devices and employees from backend
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    setLoadingDevices(true);
+    axios.get(`${API_BASE}/api/devices/me`, { headers })
+      .then(res => {
+        const payload = res.data?.data || res.data;
+        if (Array.isArray(payload)) setDevices(payload);
+      })
+      .catch(err => {
+        console.error('Failed to load devices', err);
+      })
+      .finally(() => setLoadingDevices(false));
+
+    axios.get(`${API_BASE}/api/employees`) // public endpoint
+      .then(res => {
+        const payload = res.data?.data || res.data;
+        if (Array.isArray(payload)) setEmployeesList(payload);
+      })
+      .catch(err => console.error('Failed to load employees', err));
+  }, []);
+
+  const refreshDevices = () => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    axios.get(`${API_BASE}/api/devices/me`, { headers })
+      .then(res => {
+        const payload = res.data?.data || res.data;
+        if (Array.isArray(payload)) setDevices(payload);
+      })
+      .catch(err => console.error('Failed to refresh devices', err));
+  };
+
+  const handleAssignSubmit = async () => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const body = { employeeId: assignForm.employeeId, assignedDate: assignForm.assignedDate, location: assignForm.location, notes: assignForm.notes };
+      const deviceId = assignForm.deviceId;
+      await axios.post(`${API_BASE}/api/devices/${deviceId}/assign`, body, { headers: { Authorization: `Bearer ${token}` } });
+      setIsAddDeviceOpen(false);
+      setAssignForm({ employeeId: '', deviceId: '', location: '', notes: '' });
+      refreshDevices();
+    } catch (err) {
+      console.error('Failed to assign device', err);
+    }
+  };
+
+  const handleReturnDevice = async (deviceId) => {
+    const token = localStorage.getItem('authToken');
+    try {
+      await axios.post(`${API_BASE}/api/devices/${deviceId}/return`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      refreshDevices();
+    } catch (err) {
+      console.error('Failed to return device', err);
+    }
+  };
+
+  const handleCreateDevice = async () => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const body = { name: createForm.name, type: createForm.type, brand: createForm.brand, model: createForm.model, serialNumber: createForm.serialNumber, ram: createForm.ram, storage: createForm.storage, purchaseDate: createForm.purchaseDate, condition: createForm.condition, notes: createForm.notes };
+      await axios.post(`${API_BASE}/api/devices`, body, { headers: { Authorization: `Bearer ${token}` } });
+      setIsCreateDeviceOpen(false);
+      setCreateForm({ name: '', type: 'laptop', brand: '', model: '', serialNumber: '', ram: '', storage: '', purchaseDate: '', condition: 'excellent', notes: '' });
+      refreshDevices();
+    } catch (err) {
+      console.error('Failed to create device', err);
+    }
+  };
+
+  const handleDeleteDeviceRemote = async (deviceId) => {
+    const token = localStorage.getItem('authToken');
+    try {
+      await axios.delete(`${API_BASE}/api/devices/${deviceId}`, { headers: { Authorization: `Bearer ${token}` } });
+      setDevices(prev => prev.filter(d => String(d._id || d.id) !== String(deviceId)));
+    } catch (err) {
+      console.error('Failed to delete device', err);
+      // fallback: local delete
+      setDevices(prev => prev.filter(d => String(d._id || d.id) !== String(deviceId)));
+    }
   };
 
   return (
@@ -211,11 +371,11 @@ const HRDeviceManagement = () => {
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{deviceAssignments.length}</div>
+              <div className="text-2xl font-bold">{normalizedDevices.filter(d => d.status !== 'available').length}</div>
               <div className="text-sm text-blue-100">Assigned</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{availableDevices.length}</div>
+              <div className="text-2xl font-bold">{availableFromState.length}</div>
               <div className="text-sm text-blue-100">Available</div>
             </div>
           </div>
@@ -235,13 +395,88 @@ const HRDeviceManagement = () => {
             />
           </div>
         </div>
-        <Dialog open={isAddDeviceOpen} onOpenChange={setIsAddDeviceOpen}>
-          <DialogTrigger asChild>
-            <Button className="btn-gradient">
-              <Plus className="w-4 h-4 mr-2" />
-              Assign Device
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Dialog open={isCreateDeviceOpen} onOpenChange={setIsCreateDeviceOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Device
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create New Device</DialogTitle>
+                <DialogDescription>
+                  Add a new device to the company inventory.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="deviceName">Device Name</Label>
+                  <Input placeholder="e.g., MacBook Pro 16" value={createForm.name} onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deviceType">Device Type</Label>
+                  <Select value={createForm.type} onValueChange={(v) => setCreateForm(prev => ({ ...prev, type: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select device type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="laptop">Laptop</SelectItem>
+                      <SelectItem value="tablet">Tablet</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="monitor">Monitor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model</Label>
+                  <Input placeholder="e.g., MacBook Pro M2" value={createForm.model} onChange={(e) => setCreateForm(prev => ({ ...prev, model: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="serialNumber">Serial Number</Label>
+                  <Input placeholder="e.g., MBP2023001" value={createForm.serialNumber} onChange={(e) => setCreateForm(prev => ({ ...prev, serialNumber: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ram">RAM</Label>
+                  <Input placeholder="e.g., 16GB, 32GB" value={createForm.ram} onChange={(e) => setCreateForm(prev => ({ ...prev, ram: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="storage">Storage</Label>
+                  <Input placeholder="e.g., 512GB SSD, 1TB SSD" value={createForm.storage} onChange={(e) => setCreateForm(prev => ({ ...prev, storage: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="condition">Condition</Label>
+                  <Select value={createForm.condition} onValueChange={(v) => setCreateForm(prev => ({ ...prev, condition: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="excellent">Excellent</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDeviceOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => handleCreateDevice()}>
+                  Create Device
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isAddDeviceOpen} onOpenChange={setIsAddDeviceOpen}>
+            <DialogTrigger asChild>
+              <Button className="btn-gradient">
+                <Plus className="w-4 h-4 mr-2" />
+                Assign Device
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Assign Device to Employee</DialogTitle>
@@ -252,29 +487,32 @@ const HRDeviceManagement = () => {
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="employee">Employee</Label>
-                <Select>
+                <Select value={assignForm.employeeId} onValueChange={(v) => setAssignForm(prev => ({ ...prev, employeeId: v }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select employee" />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id.toString()}>
-                        {employee.name} - {employee.department}
-                      </SelectItem>
-                    ))}
+                    {employeesList.map((employee) => {
+                      const empId = employee._id || employee.id;
+                      return (
+                        <SelectItem key={empId} value={String(empId)}>
+                          {employee.name} - {employee.department}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="device">Available Device</Label>
-                <Select>
+                <Select value={assignForm.deviceId} onValueChange={(v) => setAssignForm(prev => ({ ...prev, deviceId: v }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select device" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableDevices.map((device) => (
-                      <SelectItem key={device.id} value={device.id.toString()}>
-                        {device.name} - {device.serialNumber}
+                    {availableFromState.map((device) => (
+                      <SelectItem key={device.id} value={device.id}>
+                        {device.deviceName || device.raw?.name} - {device.serialNumber}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -282,19 +520,116 @@ const HRDeviceManagement = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
-                <Input placeholder="Office location or desk number" />
+                <Input placeholder="Office location or desk number" value={assignForm.location} onChange={(e) => setAssignForm(prev => ({ ...prev, location: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes (Optional)</Label>
-                <Textarea placeholder="Any additional notes about this assignment..." />
+                <Textarea placeholder="Any additional notes about this assignment..." value={assignForm.notes} onChange={(e) => setAssignForm(prev => ({ ...prev, notes: e.target.value }))} />
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDeviceOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setIsAddDeviceOpen(false)}>
+              <Button onClick={() => handleAssignSubmit()}>
                 Assign Device
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Edit Device Dialog */}
+        <Dialog open={isEditDeviceOpen} onOpenChange={setIsEditDeviceOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Device Assignment</DialogTitle>
+              <DialogDescription>
+                Update device information and assignment details.
+              </DialogDescription>
+            </DialogHeader>
+            {editingDevice && (
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="deviceName">Device Name</Label>
+                  <Input 
+                    defaultValue={editingDevice.deviceName}
+                    placeholder="Enter device name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model</Label>
+                  <Input 
+                    defaultValue={editingDevice.model}
+                    placeholder="Enter device model"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="serialNumber">Serial Number</Label>
+                  <Input 
+                    defaultValue={editingDevice.serialNumber}
+                    placeholder="Enter serial number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ram">RAM</Label>
+                  <Input 
+                    defaultValue={editingDevice.ram}
+                    placeholder="e.g., 16GB, 32GB"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="storage">Storage</Label>
+                  <Input 
+                    defaultValue={editingDevice.storage}
+                    placeholder="e.g., 512GB SSD, 1TB SSD"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input 
+                    defaultValue={editingDevice.location}
+                    placeholder="Office location or desk number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select defaultValue={editingDevice.status}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                      <SelectItem value="returned">Returned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="condition">Condition</Label>
+                  <Select defaultValue={editingDevice.condition}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="excellent">Excellent</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDeviceOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                // In a real app, you'd get values from form inputs
+                handleUpdateDevice(editingDevice);
+              }}>
+                Update Device
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -328,7 +663,7 @@ const HRDeviceManagement = () => {
                   return (
                     <div 
                       key={device.id} 
-                      className="flex items-center justify-between p-4 rounded-lg border hover:shadow-md transition-shadow"
+                      className="flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-lg border hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-center space-x-4">
                         <div className="p-3 bg-accent rounded-lg">
@@ -337,7 +672,7 @@ const HRDeviceManagement = () => {
                         <div>
                           <h4 className="font-semibold text-lg">{device.deviceName}</h4>
                           <p className="text-muted-foreground">{device.model} • {device.serialNumber}</p>
-                          <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between items-center space-x-4 mt-2 text-sm text-muted-foreground">
                             <div className="flex items-center space-x-1">
                               <UserPlus className="w-4 h-4" />
                               <span>{device.employeeName}</span>
@@ -363,10 +698,19 @@ const HRDeviceManagement = () => {
                           {device.status}
                         </Badge>
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditDevice(device)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive"
+                            onClick={() => handleDeleteDeviceRemote(device.id)}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -382,10 +726,11 @@ const HRDeviceManagement = () => {
         {/* By Employee Tab */}
         <TabsContent value="by-employee" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {employees.map((employee) => {
-              const employeeDevices = getEmployeeDevices(employee.id);
+            {employeesList.map((employee) => {
+              const empId = employee._id || employee.id;
+              const employeeDevices = getEmployeeDevices(empId);
               return (
-                <Card key={employee.id} className="dashboard-card">
+                <Card key={empId} className="dashboard-card">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-3">
                       <Avatar className="w-10 h-10">
@@ -426,7 +771,12 @@ const HRDeviceManagement = () => {
                       <div className="text-center py-6 text-muted-foreground">
                         <AlertCircle className="w-8 h-8 mx-auto mb-2" />
                         <p>No devices assigned</p>
-                        <Button variant="outline" size="sm" className="mt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2"
+                          onClick={() => setIsAddDeviceOpen(true)}
+                        >
                           Assign Device
                         </Button>
                       </div>
@@ -451,39 +801,48 @@ const HRDeviceManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {availableDevices.map((device) => {
-                  const DeviceIcon = getDeviceIcon(device.type);
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availableFromState.map((device) => {
+                  const DeviceIcon = getDeviceIcon(device.deviceType);
                   return (
                     <div 
                       key={device.id} 
-                      className="flex items-center justify-between p-4 rounded-lg border hover:shadow-md transition-shadow"
+                      className="flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-lg border hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-center space-x-4">
+                      {/* Left Section */}
+                      <div className="flex items-start md:items-center space-x-4 mb-4 md:mb-0">
                         <div className="p-3 bg-secondary/50 rounded-lg">
                           <DeviceIcon className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-lg">{device.name}</h4>
-                          <p className="text-muted-foreground">{device.model} • {device.serialNumber}</p>
-                          <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
+                          <h4 className="font-semibold text-lg">{device.deviceName || device.raw?.name}</h4>
+                          <p className="text-muted-foreground">
+                            {device.model} • {device.serialNumber}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground flex-wrap">
                             <div className="flex items-center space-x-1">
                               <Calendar className="w-4 h-4" />
-                              <span>Purchased: {new Date(device.purchaseDate).toLocaleDateString()}</span>
+                              <span>
+                                Purchased: {device.raw?.purchaseDate ? new Date(device.raw.purchaseDate).toLocaleDateString() : '—'}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Badge 
-                          className={getConditionColor(device.condition)}
-                        >
+
+                      {/* Right Section */}
+                      <div className="flex flex-wrap items-center space-x-3">
+                        <Badge className={getConditionColor(device.condition)}>
                           {device.condition}
                         </Badge>
                         <Badge variant="secondary">
                           {device.status}
                         </Badge>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => { setAssignForm(prev => ({ ...prev, deviceId: device.id })); setIsAddDeviceOpen(true); }}
+                        >
                           <UserPlus className="w-4 h-4 mr-2" />
                           Assign
                         </Button>
