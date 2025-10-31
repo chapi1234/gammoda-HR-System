@@ -15,6 +15,7 @@ const connectDB = async () => {
     });
 
     await mongoose.connect(process.env.MONGODB_URI);
+    console.log('MongoDB connect attempt using URI:', process.env.MONGODB_URI ? '[REDACTED]' : 'MONGODB_URI not set');
   } catch (error) {
     console.error("MongoDB connection error:", error);
     process.exit(1);

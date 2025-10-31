@@ -13,6 +13,13 @@ import departmentRoutes from "./routes/department.js";
 import eventRoutes from "./routes/event.js";
 import goalRoutes from "./routes/goal.js";
 import attendanceRoutes from "./routes/attendance.js";
+import activityRoutes from "./routes/activity.js";
+import leaveRoutes from "./routes/leave.js";
+import payrollRoutes from "./routes/payroll.js";
+import payslipRoutes from './routes/payslip.js';
+import jobRoutes from './routes/jobs.js';
+import candidateRoutes from './routes/candidates.js';
+import deviceRoutes from './routes/device.js';
 
 const app = express();
 connectDB();
@@ -33,6 +40,14 @@ app.use("/api/departments", departmentRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/activities", activityRoutes);
+
+app.use("/api/leave", leaveRoutes);
+app.use('/api/payslips', payslipRoutes);
+app.use("/api/payroll", payrollRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/candidates', candidateRoutes);
+app.use('/api/devices', deviceRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
