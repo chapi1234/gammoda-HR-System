@@ -8,7 +8,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent } from "../components/ui/card";
 import { useAuth } from "../contexts/AuthContext";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { siteConfig } from "../config/siteConfig";
 
 export default function Register() {
