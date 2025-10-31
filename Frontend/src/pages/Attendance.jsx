@@ -385,7 +385,7 @@ const Attendance = () => {
           </p>
         </div>
         {isHR ? (
-          <div className="flex gap-2 justify-between">
+          <div className="flex gap-2">
             <Button onClick={handleMarkAttendance} className="btn-gradient" disabled={!canCheckIn} title={canCheckIn ? 'Mark my check-in' : 'Already checked in today'}>
               <Clock className="w-4 h-4 mr-2" />
               My Check-in

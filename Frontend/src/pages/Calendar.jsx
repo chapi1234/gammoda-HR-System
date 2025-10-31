@@ -191,7 +191,7 @@ const Calendar = () => {
                 Add Event
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Event</DialogTitle>
                 <DialogDescription>Create a new calendar event</DialogDescription>

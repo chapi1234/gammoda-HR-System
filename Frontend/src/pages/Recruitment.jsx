@@ -140,79 +140,10 @@ const Recruitment = () => {
     return () => { mounted = false; };
   }, [API_BASE, departments]);
 
-  // Mock applicants data
-  const [applicants, setApplicants] = useState([
-    {
-      id: 1,
-      name: "Hana Jote",
-      email: "hana.jote@email.com",
-      phone: "+2519-2986-4782",
-      position: "Senior Frontend Developer",
-      jobId: 1,
-      experience: "5 years",
-      skills: ["React", "TypeScript", "Node.js"],
-      status: "shortlisted",
-      appliedDate: "2025-01-20",
-      resume: "hana_jote_resume.pdf",
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      name: "Amanuel Admasu",
-      email: "amanuel.admasu@email.com",
-      phone: "+2519-8976-1732",
-      position: "Marketing Manager",
-      jobId: 2,
-      experience: "7 years",
-      skills: ["Digital Marketing", "SEO", "Analytics"],
-      status: "under_review",
-      appliedDate: "2025-01-18",
-      resume: "amanuel_admasu_resume.pdf",
-      rating: 4.2,
-    },
-    {
-      id: 3,
-      name: "Tsega Eyuel",
-      email: "tsega.eyuel@email.com",
-      phone: "+2519-2657-0537",
-      position: "Sales Executive",
-      jobId: 3,
-      experience: "3 years",
-      skills: ["B2B Sales", "CRM", "Lead Generation"],
-      status: "rejected",
-      appliedDate: "2025-01-15",
-      resume: "tsega_eyuel_resume.pdf",
-      rating: 3.8,
-    },
-    {
-      id: 4,
-      name: "Biruk Tesfaye",
-      email: "biruk.tesfaye@email.com",
-      phone: "+2519-1111-2233",
-      position: "Senior Frontend Developer",
-      jobId: 1,
-      experience: "6 years",
-      skills: ["React", "Vue.js", "GraphQL", "AWS"],
-      status: "applied",
-      appliedDate: "2025-08-22",
-      resume: "biruk_tesfaye_resume.pdf",
-      rating: 4.8,
-    },
-    {
-      id: 5,
-      name: "Temesgen Abel",
-      email: "temesgen.abel@email.com",
-      phone: "+2519-4444-5566",
-      position: "Senior Frontend Developer",
-      jobId: 1,
-      experience: "4 years",
-      skills: ["React", "Angular", "TypeScript"],
-      status: "under_review",
-      appliedDate: "2024-01-19",
-      resume: "michael_davis_resume.pdf",
-      rating: 4.0,
-    },
-  ]);
+  // applicants state will be loaded from backend
+  const [allApplicants, setAllApplicants] = useState([]);
+  // applicants for the currently selected job in the Job Detail dialog
+  const [jobApplicants, setJobApplicants] = useState([]);
 
   const [newJob, setNewJob] = useState({
     title: "",
@@ -262,6 +193,48 @@ const Recruitment = () => {
     return () => { mounted = false; };
   }, [API_BASE]);
 
+  // Load all applicants (flatten candidate.applications -> application rows)
+  const fetchAllApplicants = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.get(`${API_BASE}/api/candidates`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const payload = res.data && res.data.data ? res.data.data : res.data;
+      if (Array.isArray(payload)) {
+        const flat = [];
+        payload.forEach((cand) => {
+          const apps = Array.isArray(cand.applications) ? cand.applications : [];
+          apps.forEach((app) => {
+            flat.push({
+              id: app._id || `${cand._id}-${app.appliedAt}`,
+              candidateId: cand._id,
+              jobApplicationId: app._id, // may be undefined if synthetic
+              jobDetailId: app._jobDetailId || null,
+              name: cand.name,
+              email: cand.email,
+              phone: cand.phone,
+              position: (jobPostings.find(j => String(j.id) === String(app.job)) || {}).title || "",
+              jobId: app.job,
+              experience: app.experience || "",
+              skills: Array.isArray(app.skills) ? app.skills : (app.skills ? String(app.skills).split(',').map(s => s.trim()) : []),
+              status: app.status || 'applied',
+              appliedDate: app.appliedAt || cand.createdAt,
+              resume: (app.resume && (app.resume.url || app.resume.filename)) || (cand.resume && (cand.resume.url || cand.resume.filename)) || '',
+            });
+          });
+        });
+        setAllApplicants(flat);
+      }
+    } catch (err) {
+      console.error('Failed to load applicants', err);
+      setAllApplicants([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllApplicants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [API_BASE, jobPostings]);
+
   const filteredJobs = jobPostings.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -270,11 +243,11 @@ const Recruitment = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const filteredApplicants = applicants.filter((applicant) => {
+  const filteredApplicants = allApplicants.filter((applicant) => {
     const matchesSearch =
-      applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      applicant.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      applicant.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (applicant.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (applicant.position || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (applicant.email || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       filterStatus === "all" || applicant.status === filterStatus;
     return matchesSearch && matchesStatus;
@@ -342,13 +315,44 @@ const Recruitment = () => {
     })();
   };
 
-  const handleApplicantAction = (id, status) => {
-    setApplicants((prev) =>
-      prev.map((applicant) =>
-        applicant.id === id ? { ...applicant, status } : applicant
-      )
+  const handleApplicantAction = async (id, status) => {
+    // optimistic UI update
+    const prevAll = allApplicants;
+    const prevJob = jobApplicants;
+    setAllApplicants((prev) =>
+      prev.map((applicant) => (applicant.id === id ? { ...applicant, status } : applicant))
     );
-    toast.success(`Applicant ${status} successfully!`);
+    setJobApplicants((prev) =>
+      prev.map((applicant) => (applicant.id === id ? { ...applicant, status } : applicant))
+    );
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.patch(
+        `${API_BASE}/api/candidates/applications/${id}/status`,
+        { status },
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      if (res.data && res.data.status) {
+        toast.success(`Applicant ${status} successfully!`);
+        // refresh both views so changes are reflected everywhere
+        try {
+          await fetchAllApplicants();
+          if (showJobDetailDialog && selectedJob) await fetchJobApplicants(selectedJob.id);
+        } catch (e) {
+          // ignore refresh errors, we've already shown success
+          console.error('Failed to refresh applicants after status update', e);
+        }
+      } else {
+        throw new Error(res.data?.message || 'Failed to update status');
+      }
+    } catch (err) {
+      console.error('Failed to update applicant status', err);
+      // revert optimistic update
+      setAllApplicants(prevAll);
+      setJobApplicants(prevJob);
+      toast.error(err?.response?.data?.message || err.message || 'Failed to update applicant status');
+    }
   };
 
   const handleViewJobDetails = (job) => {
@@ -356,10 +360,76 @@ const Recruitment = () => {
     const deptId = departments.find(
       (d) => d.name === job.department || d._id === job.department || d.id === job.department
     )?._id || departments.find((d) => d.name === job.department)?.id || job.department;
+
+    // set basic selected job UI state immediately
     setSelectedJob(job);
     setEditJobData({ ...job, department: deptId, requirementsRaw: (job.requirements || []).join("\n") });
     setIsEditingJob(false);
     setShowJobDetailDialog(true);
+
+    // load applicants for this job from backend
+    fetchJobApplicants(job.id);
+  };
+
+  const fetchJobApplicants = async (jobId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.get(`${API_BASE}/api/jobs/${jobId}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const payload = res.data && res.data.data ? res.data.data : res.data;
+      const details = payload?.applicationsDetails || [];
+      const candidatesPopulated = Array.isArray(payload?.applications) ? payload.applications : [];
+
+      const mapped = [];
+      if (Array.isArray(details) && details.length) {
+        details.forEach((d) => {
+          // d.candidate may be populated or an id
+          const candDoc = d.candidate && typeof d.candidate === 'object' ? d.candidate : (candidatesPopulated.find(c => String(c._id) === String(d.candidate)) || null);
+          mapped.push({
+            id: d._id || `${d.candidate}-${d.appliedAt}`,
+            candidateId: candDoc?._id || d.candidate || null,
+            jobApplicationId: null,
+            jobDetailId: d._id,
+            name: candDoc?.name || d.name || '',
+            email: candDoc?.email || d.email || '',
+            phone: candDoc?.phone || d.phone || '',
+            position: payload?.title || job.title || '',
+            jobId: payload?._id || jobId,
+            experience: d.experience || '',
+            skills: Array.isArray(d.skills) ? d.skills : (d.skills ? String(d.skills).split(',').map(s => s.trim()) : []),
+            status: d.status || 'applied',
+            appliedDate: d.appliedAt || d.appliedAt || '',
+            resume: (d.resume && (d.resume.url || d.resume.filename)) || (candDoc && (candDoc.resume?.url || candDoc.resume?.filename)) || '',
+          });
+        });
+      } else if (Array.isArray(candidatesPopulated) && candidatesPopulated.length) {
+        // fallback: job.applications was populated with candidate docs
+        candidatesPopulated.forEach((cand) => {
+          // try to find candidate's application in their candidate.applications if available
+          const app = Array.isArray(cand.applications) && cand.applications.length ? cand.applications.find(a => String(a.job) === String(jobId)) : null;
+          mapped.push({
+            id: app?._id || cand._id,
+            candidateId: cand._id,
+            jobApplicationId: app?._id || null,
+            jobDetailId: null,
+            name: cand.name,
+            email: cand.email,
+            phone: cand.phone,
+            position: payload?.title || job.title || '',
+            jobId: jobId,
+            experience: app?.experience || '',
+            skills: app?.skills || [],
+            status: app?.status || 'applied',
+            appliedDate: app?.appliedAt || cand.createdAt,
+            resume: (app && (app.resume?.url || app.resume?.filename)) || (cand.resume && (cand.resume.url || cand.resume.filename)) || '',
+          });
+        });
+      }
+
+      setJobApplicants(mapped);
+    } catch (err) {
+      console.error('Failed to load job applicants', err);
+      setJobApplicants([]);
+    }
   };
 
   const handleEditJob = () => {
@@ -447,7 +517,9 @@ const Recruitment = () => {
   };
 
   const getJobApplicants = (jobId) => {
-    return applicants.filter((applicant) => applicant.jobId === jobId);
+    // prefer jobApplicants loaded from server; fall back to filtering allApplicants
+    if (jobApplicants && jobApplicants.length) return jobApplicants.filter((a) => String(a.job) === String(jobId) || String(a.jobId) === String(jobId));
+    return allApplicants.filter((applicant) => String(applicant.jobId) === String(jobId) || String(applicant.job) === String(jobId));
   };
 
   const getJobStatusBadge = (status) => {
@@ -474,8 +546,8 @@ const Recruitment = () => {
 
   const totalJobs = jobPostings.length;
   const activeJobs = jobPostings.filter((j) => j.status === "active").length;
-  const totalApplicants = applicants.length;
-  const shortlistedApplicants = applicants.filter(
+  const totalApplicants = allApplicants.length;
+  const shortlistedApplicants = allApplicants.filter(
     (a) => a.status === "shortlisted"
   ).length;
 
@@ -728,7 +800,7 @@ const Recruitment = () => {
           </Card>
 
           {/* Job Listings */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-300">
             {filteredJobs.map((job) => (
               <Card
                 key={job.id}
@@ -886,32 +958,36 @@ const Recruitment = () => {
                     {isHR && (
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          {applicant.status === "applied" && (
+                          {/* First icon: Eye -> mark as shortlisted */}
+                          {(applicant.status !== "shortlisted" && applicant.status !== "rejected" && applicant.status !== "hired") && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleApplicantAction(applicant.id, "shortlisted")}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          )}
+
+                          {/* Second icon: Person/Check -> mark as hired */}
+                          {(applicant.status !== "hired" && applicant.status !== "rejected") && (
                             <Button
                               variant="ghost"
                               size="sm"
                               className="text-green-600 hover:text-green-700"
-                              onClick={() =>
-                                handleApplicantAction(
-                                  applicant.id,
-                                  "shortlisted"
-                                )
-                              }
+                              onClick={() => handleApplicantAction(applicant.id, "hired")}
                             >
                               <UserCheck className="w-4 h-4" />
                             </Button>
                           )}
+
+                          {/* Last icon: X -> mark as rejected */}
                           {applicant.status !== "rejected" && (
                             <Button
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              onClick={() =>
-                                handleApplicantAction(applicant.id, "rejected")
-                              }
+                              onClick={() => handleApplicantAction(applicant.id, "rejected")}
                             >
                               <UserX className="w-4 h-4" />
                             </Button>
@@ -944,7 +1020,7 @@ const Recruitment = () => {
       <Dialog open={showJobDetailDialog} onOpenChange={setShowJobDetailDialog}>
         <DialogContent
           className="max-w-4xl"
-          style={{ maxHeight: "100vh", overflowY: "auto" }}
+          style={{ maxHeight: "98vh", overflowY: "auto" }}
         >
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -1249,12 +1325,11 @@ const Recruitment = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() =>
-                                window.open(
-                                  `/resumes/${applicant.resume}`,
-                                  "_blank"
-                                )
-                              }
+                              onClick={() => {
+                                const url = applicant?.resume?.url || applicant?.resume;
+                                if (url) window.open(url, "_blank");
+                                else toast.error("No resume link available");
+                              }}
                             >
                               <Download className="w-4 h-4 mr-1" />
                               Resume
@@ -1263,32 +1338,38 @@ const Recruitment = () => {
                               applicant.status !== "hired" &&
                               applicant.status !== "rejected" && (
                                 <div className="flex gap-1">
-                                  {applicant.status !== "shortlisted" && (
+                                  {/* First icon: Eye -> mark as shortlisted */}
+                                  {(applicant.status !== "shortlisted" && applicant.status !== "rejected" && applicant.status !== "hired") && (
                                     <Button
                                       size="sm"
-                                      onClick={() =>
-                                        handleApplicantAction(
-                                          applicant.id,
-                                          "shortlisted"
-                                        )
-                                      }
+                                      onClick={() => handleApplicantAction(applicant.id, "shortlisted")}
+                                      className="btn-gradient"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </Button>
+                                  )}
+
+                                  {/* Second icon: Person/Check -> mark as hired */}
+                                  {(applicant.status !== "hired" && applicant.status !== "rejected") && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleApplicantAction(applicant.id, "hired")}
                                       className="btn-gradient"
                                     >
                                       <UserCheck className="w-4 h-4" />
                                     </Button>
                                   )}
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleApplicantAction(
-                                        applicant.id,
-                                        "rejected"
-                                      )
-                                    }
-                                  >
-                                    <UserX className="w-4 h-4" />
-                                  </Button>
+
+                                  {/* Third icon: Reject */}
+                                  {applicant.status !== "rejected" && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleApplicantAction(applicant.id, "rejected")}
+                                    >
+                                      <UserX className="w-4 h-4" />
+                                    </Button>
+                                  )}
                                 </div>
                               )}
                           </div>

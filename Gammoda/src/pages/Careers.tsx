@@ -17,8 +17,31 @@ export default function Careers() {
   const [location, setLocation] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const departments = ["Programs", "Operations", "Finance", "Human Resources", "IT"];
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const locations = ["Remote", "Headquarters", "Community City", "Field Office"];
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // expect backend endpoint: GET /departments/public-list
+        const res = await apiClient.get("/departments/public-list");
+        if (!mounted) return;
+        // res may be { data: [...] } or an array
+        const payload = (res && (res as any).data) ? (res as any).data : res;
+        if (Array.isArray(payload)) {
+          const normalized = payload.map((d: any) => ({
+            id: d._id || d.id || String(d),
+            name: d.name || d.label || String(d),
+          }));
+          setDepartments(normalized);
+        }
+      } catch (err) {
+        console.error("Failed to load departments for careers", err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     fetchJobs();
@@ -35,12 +58,50 @@ export default function Careers() {
       if (search) params.append("search", search);
       if (department) params.append("department", department);
       if (location) params.append("location", location);
-      params.append("status", "open");
+  // Backend Job model uses 'active'|'closed'|'draft' for status
+  params.append("status", "active");
 
-      const response = await apiClient.get<JobsResponse>(
-        `${apiEndpoints.jobs}?${params.toString()}`
-      );
-      setJobs(response);
+      const response = await apiClient.get(`${apiEndpoints.jobs}?${params.toString()}`);
+      // Normalize server response shapes. Backend returns { status: true, data: [...], total, page, limit }
+      const respBody = response && (response as any).data ? (response as any) : response;
+      let dataArray: any[] = [];
+      let total = 0;
+      let page = currentPage;
+      let limit = 9;
+
+      if (respBody) {
+        if (Array.isArray(respBody)) {
+          dataArray = respBody;
+          total = respBody.length;
+        } else if (Array.isArray(respBody.data)) {
+          dataArray = respBody.data;
+          total = respBody.total || dataArray.length;
+          page = respBody.page || page;
+          limit = respBody.limit || limit;
+        } else if (Array.isArray((respBody as any).data?.data)) {
+          // double-wrapped
+          dataArray = (respBody as any).data.data;
+          total = (respBody as any).data.total || dataArray.length;
+        }
+      }
+
+      // Map server job documents to UI Job shape
+      const mapped = dataArray.map((j: any) => ({
+        id: j._id || j.id,
+        title: j.title,
+        department: (j.department && (j.department.name || j.department)) || "",
+        location: j.location || "",
+        jobType: j.jobType || j.type || "",
+        salaryRange: j.salaryRange ? (typeof j.salaryRange === 'string' ? j.salaryRange : `${j.salaryRange.min || ''}${j.salaryRange.max ? ' - ' + j.salaryRange.max : ''}`) : (j.salary || ""),
+        status: j.status || "active",
+        postedDate: j.postedDate || j.createdAt || new Date().toISOString(),
+        closingDate: j.closingDate,
+        description: j.description || "",
+        requirements: Array.isArray(j.requirements) ? j.requirements.join(', ') : (j.requirements || ""),
+        applicationsCount: Array.isArray(j.applications) ? j.applications.length : (j.applicationsCount || 0),
+      }));
+
+      setJobs({ data: mapped, total, page, limit });
     } catch (error) {
       console.error("Failed to fetch jobs:", error);
     } finally {
@@ -64,7 +125,7 @@ export default function Careers() {
       />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+  <section className="bg-linear-to-br from-blue-50 to-indigo-100 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
           <h1 className="mb-6 text-gray-900">Join Our Team</h1>
           <p className="text-gray-600 text-lg">
@@ -98,8 +159,8 @@ export default function Careers() {
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
                 {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
+                  <SelectItem key={dept.id} value={dept.id}>
+                    {dept.name}
                   </SelectItem>
                 ))}
               </SelectContent>
