@@ -12,7 +12,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { apiClient } from "../utils/api";
 import { apiEndpoints } from "../config/apiConfig";
 import { Candidate } from "../types";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, logout, updateUser } = useAuth();
@@ -33,11 +33,21 @@ export default function Dashboard() {
   const fetchCandidateData = async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get<Candidate>(apiEndpoints.candidateMe);
+      const res: any = await apiClient.get<Candidate>(apiEndpoints.candidateMe);
+      // apiClient returns response.data in most setups, but some endpoints may wrap payload
+      // defensively unwrap possible shapes: { status, data }, { data: candidate }, or candidate
+      let payload = res;
+      if (payload && payload.data !== undefined) {
+        // if double-wrapped { data: { data: ... } }
+        if (payload.data.data !== undefined) payload = payload.data.data;
+        else payload = payload.data;
+      }
+
+      const data = payload as Candidate;
       setCandidateData(data);
       setFormData({
-        name: data.name,
-        phone: data.phone || "",
+        name: data?.name || "",
+        phone: data?.phone || "",
       });
     } catch (error) {
       console.error("Failed to fetch candidate data:", error);
@@ -92,6 +102,17 @@ export default function Dashboard() {
     }
   };
 
+  // Helper to format dates safely and support multiple payload field names
+  function formatApplicationDate(app: any) {
+    const dateVal = app?.appliedAt || app?.appliedDate || app?.appliedOn || app?.createdAt || app?.applied_on;
+    if (!dateVal) return "Unknown";
+    try {
+      return new Date(dateVal).toLocaleDateString();
+    } catch (e) {
+      return String(dateVal);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -108,7 +129,7 @@ export default function Dashboard() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-gray-900">Welcome back, {user?.name}!</h1>
+              <h1 className="text-gray-900">Welcome back, {candidateData?.name || user?.name}!</h1>
               <p className="text-gray-600">Manage your profile and track your applications</p>
             </div>
             <Button variant="outline" onClick={logout} className="gap-2">
@@ -280,20 +301,19 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       {candidateData.applications.map((application) => (
                         <div
-                          key={application.id}
+                          key={(application as any)._id || (application as any).id}
                           className="rounded-lg border border-gray-200 p-4"
                         >
                           <div className="mb-3 flex items-start justify-between">
                             <div>
                               <h3 className="text-gray-900">
-                                {application.job?.title || "Position"}
+                                {(application as any)?.job?.title || (application as any)?.jobTitle || (application as any)?.jobName || "Position"}
                               </h3>
                               <p className="text-gray-600 text-sm">
-                                Applied on{" "}
-                                {new Date(application.appliedDate).toLocaleDateString()}
+                                Applied on {formatApplicationDate(application)}
                               </p>
                             </div>
-                            <ApplicationStatusBadge status={application.status} />
+                            <ApplicationStatusBadge status={(application as any).status} />
                           </div>
 
                           {application.statusHistory && application.statusHistory.length > 0 && (
