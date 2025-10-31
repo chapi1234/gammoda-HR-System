@@ -7,7 +7,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent } from "../components/ui/card";
 import { siteConfig } from "../config/siteConfig";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 export default function Contact() {
   const [formData, setFormData] = useState({

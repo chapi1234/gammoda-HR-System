@@ -21,6 +21,8 @@ import Calendar from './pages/Calendar';
 import Goals from './pages/Goals';
 import Payslips from './pages/Payslips';
 import NotFound from "./pages/NotFound";
+import EmployeeDevices from './pages/EmployeeDevices';
+import HRDeviceManagement from './pages/HRDeviceManagement';
 import 'react-toastify/dist/ReactToastify.css';
 
 const queryClient = new QueryClient();
@@ -160,6 +162,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Payslips />
+          </ProtectedRoute>
+        } 
+      />
+            <Route 
+        path="/my-devices" 
+        element={
+          <ProtectedRoute>
+            <EmployeeDevices />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/device-management" 
+        element={
+          <ProtectedRoute>
+            <HRDeviceManagement />
           </ProtectedRoute>
         } 
       />

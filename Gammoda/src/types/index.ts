@@ -5,7 +5,7 @@ export interface Job {
   location: string;
   jobType: string;
   salaryRange?: string;
-  status: "open" | "closed" | "draft";
+  status: "active" | "closed" | "draft";
   postedDate: string;
   closingDate?: string;
   description: string;

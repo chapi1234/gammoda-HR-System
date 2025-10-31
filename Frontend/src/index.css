@@ -67,19 +67,12 @@ Corporate blue theme with modern gradients and professional styling.
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -145,10 +138,10 @@ Corporate blue theme with modern gradients and professional styling.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    color-scheme: dark;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -162,13 +155,112 @@ Corporate blue theme with modern gradients and professional styling.
     scroll-behavior: smooth;
   }
 
-  /* Force dark mode styles application */
-  .dark {
-    color-scheme: dark;
-  }
-
   .dark * {
     border-color: hsl(var(--border));
+  }
+
+  /* Color Scheme Variants */
+  [data-color-scheme="blue"] {
+    --primary: 217 91% 45%;
+    --primary-light: 217 91% 55%;
+    --primary-dark: 217 91% 35%;
+  }
+
+  [data-color-scheme="green"] {
+    --primary: 142 76% 36%;
+    --primary-light: 142 76% 46%;
+    --primary-dark: 142 76% 26%;
+  }
+
+  [data-color-scheme="purple"] {
+    --primary: 262 83% 58%;
+    --primary-light: 262 83% 68%;
+    --primary-dark: 262 83% 48%;
+  }
+
+  [data-color-scheme="orange"] {
+    --primary: 25 95% 53%;
+    --primary-light: 25 95% 63%;
+    --primary-dark: 25 95% 43%;
+  }
+
+  [data-color-scheme="red"] {
+    --primary: 0 84% 60%;
+    --primary-light: 0 84% 70%;
+    --primary-dark: 0 84% 50%;
+  }
+
+  [data-color-scheme="teal"] {
+    --primary: 178 78% 57%;
+    --primary-light: 178 78% 67%;
+    --primary-dark: 178 78% 47%;
+  }
+
+  /* Dark mode color scheme variants */
+  .dark[data-color-scheme="blue"] {
+    --primary: 217 91% 55%;
+    --primary-light: 217 91% 65%;
+    --primary-dark: 217 91% 45%;
+  }
+
+  .dark[data-color-scheme="green"] {
+    --primary: 142 76% 45%;
+    --primary-light: 142 76% 55%;
+    --primary-dark: 142 76% 35%;
+  }
+
+  .dark[data-color-scheme="purple"] {
+    --primary: 262 83% 68%;
+    --primary-light: 262 83% 78%;
+    --primary-dark: 262 83% 58%;
+  }
+
+  .dark[data-color-scheme="orange"] {
+    --primary: 25 95% 63%;
+    --primary-light: 25 95% 73%;
+    --primary-dark: 25 95% 53%;
+  }
+
+  .dark[data-color-scheme="red"] {
+    --primary: 0 84% 70%;
+    --primary-light: 0 84% 80%;
+    --primary-dark: 0 84% 60%;
+  }
+
+  .dark[data-color-scheme="teal"] {
+    --primary: 178 78% 67%;
+    --primary-light: 178 78% 77%;
+    --primary-dark: 178 78% 57%;
+  }
+
+  /* Font Size Variants */
+  [data-font-size="small"] {
+    font-size: 14px;
+  }
+
+  [data-font-size="medium"] {
+    font-size: 16px;
+  }
+
+  [data-font-size="large"] {
+    font-size: 18px;
+  }
+
+  /* Compact Mode */
+  [data-compact-mode="true"] .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  [data-compact-mode="true"] .space-y-4 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  [data-compact-mode="true"] .p-6 {
+    padding: 1rem !important;
+  }
+
+  [data-compact-mode="true"] .p-4 {
+    padding: 0.75rem !important;
   }
 }
 

@@ -1,7 +1,7 @@
 import { AxiosRequestConfig } from "axios";
 
 // Mock data storage
-const mockData = {
+const mockData: any = {
   jobs: [
     {
       id: "1",
@@ -10,7 +10,7 @@ const mockData = {
       location: "Remote",
       jobType: "Full-time",
       salaryRange: "$60,000 - $80,000",
-      status: "open",
+  status: "active",
       postedDate: "2025-10-15T00:00:00Z",
       closingDate: "2025-11-30T23:59:59Z",
       description: "Lead and manage development programs focused on community empowerment and sustainable growth.",
@@ -24,7 +24,7 @@ const mockData = {
       location: "Community City",
       jobType: "Full-time",
       salaryRange: "$40,000 - $55,000",
-      status: "open",
+  status: "active",
       postedDate: "2025-10-18T00:00:00Z",
       closingDate: "2025-12-15T23:59:59Z",
       description: "Work directly with communities to implement development projects and monitor progress.",
@@ -38,7 +38,7 @@ const mockData = {
       location: "Headquarters",
       jobType: "Full-time",
       salaryRange: "$50,000 - $65,000",
-      status: "open",
+  status: "active",
       postedDate: "2025-10-20T00:00:00Z",
       closingDate: "2025-11-25T23:59:59Z",
       description: "Manage financial operations, budgeting, and reporting for development projects.",
@@ -80,7 +80,7 @@ export const mockApi = {
       const page = parseInt(params.get("page") || "1");
       const limit = parseInt(params.get("limit") || "10");
 
-      let filtered = mockData.jobs.filter((job) => {
+  let filtered = mockData.jobs.filter((job: any) => {
         const matchesSearch =
           !search ||
           job.title.toLowerCase().includes(search) ||
@@ -106,14 +106,14 @@ export const mockApi = {
     // Job by ID
     if (path.startsWith("/jobs/")) {
       const id = path.split("/")[2];
-      const job = mockData.jobs.find((j) => j.id === id);
+  const job = mockData.jobs.find((j: any) => j.id === id);
       if (!job) throw new Error("Job not found");
       return job as T;
     }
 
     // Candidate profile
     if (path === "/candidates/me") {
-      const candidate = mockData.candidates[0]; // In mock mode, return first candidate
+  const candidate = mockData.candidates[0]; // In mock mode, return first candidate
       return {
         ...candidate,
         applications: mockData.applications.filter(
@@ -147,7 +147,7 @@ export const mockApi = {
 
     // Login
     if (url === "/candidates/login") {
-      const candidate = mockData.candidates.find((c) => c.email === data.email);
+  const candidate = mockData.candidates.find((c: any) => c.email === data.email);
       if (!candidate) throw new Error("Invalid credentials");
       return {
         token: "mock-jwt-token-" + Date.now(),

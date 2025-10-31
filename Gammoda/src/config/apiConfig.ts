@@ -1,6 +1,11 @@
+const env = typeof import.meta !== 'undefined' ? (import.meta as any).env : ({} as any);
+
+const defaultApiUrl = env?.VITE_API_BASE_URL || (env?.VITE_API_URL ? `${String(env.VITE_API_URL).replace(/\/$/, '')}/api` : "http://localhost:5000/api");
+
 export const apiConfig = {
-  baseURL: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || "http://localhost:3000/api",
-  useMockMode: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_USE_MOCK_MODE === "true") || true, // Toggle for mock data
+  baseURL: defaultApiUrl,
+  // Toggle for mock data: set VITE_USE_MOCK_MODE=true to enable mock mode. Defaults to false.
+  useMockMode: env?.VITE_USE_MOCK_MODE === "true",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

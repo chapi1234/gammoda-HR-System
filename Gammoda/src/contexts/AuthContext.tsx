@@ -31,8 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async () => {
     try {
-      const userData = await apiClient.get<Candidate>(apiEndpoints.candidateMe);
-      setUser(userData);
+      const res: any = await apiClient.get(apiEndpoints.candidateMe);
+      // backend shape: { status: true, data: <candidate> }
+      // apiClient may already unwrap axios response. Be defensive and try a few shapes.
+      const payload = unwrapResponse(res);
+      if (payload) {
+        // payload could be candidate object, or { user, token }
+        if ((payload as any).user) setUser((payload as any).user as Candidate);
+        else setUser(payload as Candidate);
+      }
     } catch (error) {
       console.error("Failed to load user:", error);
       localStorage.removeItem("authToken");
@@ -42,24 +49,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await apiClient.post<AuthResponse>(apiEndpoints.login, {
+    const res: any = await apiClient.post(apiEndpoints.login, {
       email,
       password,
     });
-    localStorage.setItem("authToken", response.token);
-    setUser(response.user);
+
+    const payload = unwrapResponse(res);
+    // payload may be { user, token } or the candidate directly (older APIs)
+    let token: string | undefined;
+    let userObj: Candidate | null = null;
+
+    if (payload) {
+      if ((payload as any).token) token = (payload as any).token;
+      if ((payload as any).user) userObj = (payload as any).user as Candidate;
+      // if payload looks like a candidate document
+      if (!userObj && (payload as any)._id) userObj = payload as Candidate;
+    }
+
+    if (token) localStorage.setItem("authToken", token);
+    if (userObj) setUser(userObj);
   };
 
   const register = async (name: string, email: string, password: string, phone?: string) => {
-    const response = await apiClient.post<AuthResponse>(apiEndpoints.register, {
+    const res: any = await apiClient.post(apiEndpoints.register, {
       name,
       email,
       password,
       phone,
     });
-    localStorage.setItem("authToken", response.token);
-    setUser(response.user);
+
+    const payload = unwrapResponse(res);
+    let token: string | undefined;
+    let userObj: Candidate | null = null;
+
+    if (payload) {
+      if ((payload as any).token) token = (payload as any).token;
+      if ((payload as any).user) userObj = (payload as any).user as Candidate;
+      if (!userObj && (payload as any)._id) userObj = payload as Candidate;
+    }
+
+    if (token) localStorage.setItem("authToken", token);
+    if (userObj) setUser(userObj);
   };
+
+  // Helper to defensively unwrap API responses coming from different shapes.
+  function unwrapResponse(res: any): any {
+    if (!res) return null;
+    // axios-like: res.data
+    if (res.data !== undefined) {
+      // If backend wraps payload as { status, data }
+      if (res.data.data !== undefined) return res.data.data;
+      return res.data;
+    }
+    // direct server response (already unwrapped)
+    if (res.status !== undefined && res.data === undefined && res !== null) {
+      // maybe the server response object itself: { status: true, data: ... }
+      if ((res as any).data !== undefined) return (res as any).data;
+    }
+    return res;
+  }
 
   const logout = () => {
     localStorage.removeItem("authToken");
