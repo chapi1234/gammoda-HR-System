@@ -27,8 +27,31 @@ export default function JobDetail() {
   const fetchJob = async (jobId: string) => {
     setLoading(true);
     try {
-      const response = await apiClient.get<Job>(apiEndpoints.jobById(jobId));
-      setJob(response);
+      const response = await apiClient.get(apiEndpoints.jobById(jobId));
+      // response may be the job object or { data: job }
+      const jobObj = response && (response as any).data ? (response as any).data : response;
+
+      // Normalize backend job document to the frontend Job shape
+      const mapped = {
+        id: jobObj._id || jobObj.id,
+        title: jobObj.title || "",
+        department: jobObj.department ? (typeof jobObj.department === "object" ? (jobObj.department.name || "") : jobObj.department) : "",
+        location: jobObj.location || "",
+        jobType: jobObj.jobType || jobObj.type || "",
+        salaryRange: jobObj.salaryRange
+          ? (typeof jobObj.salaryRange === "string"
+              ? jobObj.salaryRange
+              : `${jobObj.salaryRange.min || ""}${jobObj.salaryRange.max ? " - " + jobObj.salaryRange.max : ""}`)
+          : jobObj.salary || "",
+        status: jobObj.status || "active",
+        postedDate: jobObj.postedDate || jobObj.createdAt || new Date().toISOString(),
+        closingDate: jobObj.closingDate,
+        description: jobObj.description || "",
+        requirements: Array.isArray(jobObj.requirements) ? jobObj.requirements.join(', ') : (jobObj.requirements || ""),
+        applicationsCount: Array.isArray(jobObj.applications) ? jobObj.applications.length : (jobObj.applicationsCount || 0),
+      } as Job;
+
+      setJob(mapped);
     } catch (error) {
       console.error("Failed to fetch job:", error);
     } finally {
@@ -110,9 +133,9 @@ export default function JobDetail() {
                     </div>
                   </div>
                 </div>
-                <Badge variant={job.status === "open" ? "default" : "secondary"}>
-                  {job.status}
-                </Badge>
+                <Badge variant={job.status === "active" ? "default" : "secondary"}>
+                    {job.status}
+                  </Badge>
               </div>
 
               <div className="mb-6 flex flex-wrap gap-4 border-t border-gray-200 pt-4 text-gray-600 text-sm">
@@ -134,7 +157,7 @@ export default function JobDetail() {
                 )}
               </div>
 
-              {job.status === "open" && (
+              {job.status === "active" && (
                 <Button onClick={handleApply} size="lg" className="w-full gap-2 sm:w-auto">
                   Apply Now <Send className="h-4 w-4" />
                 </Button>
