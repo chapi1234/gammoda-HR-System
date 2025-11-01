@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AuthContext = createContext();
 
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, role) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${API_URL}/api/auth/login`,
         {
           email,
           password,
@@ -57,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   const signup = async (formData) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        `${API_URL}/api/auth/register`,
         formData
       );
       const data = response.data;
@@ -97,7 +98,7 @@ export const AuthProvider = ({ children }) => {
       if (!user || !token) throw new Error("Not authenticated");
 
       const response = await axios.put(
-        `http://localhost:5000/api/auth/change-password/${user._id}`,
+        `${API_URL}/api/auth/change-password/${user._id}`,
         { oldPassword, newPassword, confirmPassword },
         {
           headers: {

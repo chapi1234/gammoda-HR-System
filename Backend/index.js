@@ -28,7 +28,27 @@ const PORT = process.env.PORT || 5000;
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
+// Configure CORS: allow the frontend origins used in development and production
+const allowedOrigins = [
+  'https://gammoda.vercel.app',
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    // otherwise reject
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cookieParser());
