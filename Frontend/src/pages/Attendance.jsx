@@ -22,6 +22,24 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Attendance = () => {
+
+    const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const buttonStyle = {
+    width: "200px"
+  };
+
   const { user, isHR } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
@@ -401,7 +419,7 @@ const Attendance = () => {
             </Button>
           </div>
         ) : (
-          <Button onClick={handleMarkAttendance} className="btn-gradient" disabled={!canCheckIn} title={canCheckIn ? 'Mark your check-in' : 'You already checked in today'}>
+          <Button style={buttonStyle} onClick={handleMarkAttendance} className="btn-gradient" disabled={!canCheckIn} title={canCheckIn ? 'Mark your check-in' : 'You already checked in today'}>
             <Clock className="w-4 h-4 mr-2" />
             Mark Attendance
           </Button>
@@ -409,123 +427,148 @@ const Attendance = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-success" />
+      <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Present</p>
+                  <p className="text-xl font-bold">{todayStats.present}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Present</p>
-                <p className="text-xl font-bold">{todayStats.present}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-destructive/10 rounded-lg flex items-center justify-center">
+                  <XCircle className="w-4 h-4 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Absent</p>
+                  <p className="text-xl font-bold">{todayStats.absent}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-destructive/10 rounded-lg flex items-center justify-center">
-                <XCircle className="w-4 h-4 text-destructive" />
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Late</p>
+                  <p className="text-xl font-bold">{todayStats.late}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Absent</p>
-                <p className="text-xl font-bold">{todayStats.absent}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <CalendarIcon className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">On Leave</p>
+                  <p className="text-xl font-bold">{todayStats.leave}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
-                <AlertCircle className="w-4 h-4 text-warning" />
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Rate</p>
+                  <p className="text-xl font-bold">{attendanceRate}%</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Late</p>
-                <p className="text-xl font-bold">{todayStats.late}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <CalendarIcon className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">On Leave</p>
-                <p className="text-xl font-bold">{todayStats.leave}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Rate</p>
-                <p className="text-xl font-bold">{attendanceRate}%</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {isHR ? (
         <>
           {/* Filters */}
-          <Card className="dashboard-card">
+          <Card style={marginStyle} className="dashboard-card">
             <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search employees..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="present">Present</SelectItem>
-                    <SelectItem value="absent">Absent</SelectItem>
-                    <SelectItem value="late">Late</SelectItem>
-                    <SelectItem value="leave">On Leave</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full md:w-auto">
-                      <CalendarIcon className="w-4 h-4 mr-2" />
-                      {format(selectedDate, "PPP")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                      className="pointer-events-auto"
+              <div className="flex flex-wrap items-center gap-4 mb-5">
+                {/* Search Input */}
+                <div className="flex-1 min-w-[250px] sm:min-w-[250px] md:min-w-[200px] lg:min-w-[200px]">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search employees..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full"
                     />
-                  </PopoverContent>
-                </Popover>
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
+                  </div>
+                </div>
+
+                {/* Filter Status */}
+                <div className="flex-1 min-w-[250px] sm:min-w-[250px] md:min-w-[200px] lg:min-w-[200px]">
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Filter status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="present">Present</SelectItem>
+                      <SelectItem value="absent">Absent</SelectItem>
+                      <SelectItem value="late">Late</SelectItem>
+                      <SelectItem value="leave">On Leave</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Picker */}
+                <div className="flex-1 min-w-[250px] sm:min-w-[250px] md:min-w-[200px] lg:min-w-[200px]">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <CalendarIcon className="w-4 h-4 mr-2" />
+                        {format(selectedDate, "PPP")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Export Button */}
+                <div className="flex-1 min-w-[250px] sm:min-w-[250px] md:min-w-[200px] lg:min-w-[200px]">
+                  <Button variant="outline" className="w-full">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -617,8 +660,8 @@ const Attendance = () => {
         // Employee View
         <>
           {/* Personal Attendance Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="dashboard-card">
+          <div style={marginStyle}  className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card style={marginStyle} className="dashboard-card">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Clock className="w-5 h-5 text-primary" />
@@ -650,6 +693,7 @@ const Attendance = () => {
                   <Badge variant="outline">Office</Badge>
                 </div>
                 <Button
+                  style={buttonStyle}
                   className={checkedOutToday ? 'btn-gradient w-full' : 'btn-outline w-full'}
                   onClick={handleCheckOut}
                   disabled={!canCheckOut}
