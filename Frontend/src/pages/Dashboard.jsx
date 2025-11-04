@@ -19,6 +19,32 @@ import {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard = () => {
+
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const weeklyAttendanceContainerStyle = {
+    marginBottom: "20px"
+  };
+
+  const recentActivities = {
+    marginBottom: "20px"
+  }
+
+  const statCardStyle = {
+    height: "150px"
+  };
+
+  const marginStyle = {
+    marginBottom: "20px"
+  };
+
   const { user, isHR } = useAuth();
   const navigate = useNavigate();
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -462,48 +488,62 @@ const Dashboard = () => {
           </div>
         </div>
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Employees"
-            value={totalEmployees !== null ? String(totalEmployees) : '247'}
-            change="+12"
-            icon={Users}
-            trend="up"
-          />
-          <StatCard
-            title="Present Today"
-            value={String(attendanceStats.present)}
-            change="+5"
-            icon={UserCheck}
-            trend="up"
-          />
-          <StatCard
-            title="Absent Today"
-            value={String(attendanceStats.absent)}
-            change="-2"
-            icon={Users}
-            trend="down"
-          />
-          <StatCard
-            title="Payroll This Month"
-            value={payrollThisMonth !== null ? `$${Number(payrollThisMonth).toLocaleString()}` : '$1.2M'}
-            change="+8%"
-            icon={DollarSign}
-            trend="up"
-          />
-          <StatCard
-            title="Pending Requests"
-            value={pendingRequestsCount !== null ? String(pendingRequestsCount) : '15'}
-            change="-3"
-            icon={Calendar}
-            trend="down"
-          />
+        <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <StatCard
+              style={statCardStyle}
+              title="Total Employees"
+              value={totalEmployees !== null ? String(totalEmployees) : '247'}
+              change="+12"
+              icon={Users}
+              trend="up"
+            />
+          </div>
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <StatCard
+              style={statCardStyle}
+              title="Present Today"
+              value={String(attendanceStats.present)}
+              change="+5"
+              icon={UserCheck}
+              trend="up"
+            />
+          </div>
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <StatCard
+              style={statCardStyle}
+              title="Absent Today"
+              value={String(attendanceStats.absent)}
+              change="-2"
+              icon={Users}
+              trend="down"
+            />
+          </div>
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <StatCard
+              style={statCardStyle}
+              title="Payroll This Month"
+              value={payrollThisMonth !== null ? `$${Number(payrollThisMonth).toLocaleString()}` : '$1.2M'}
+              change="+8%"
+              icon={DollarSign}
+              trend="up"
+            />
+          </div>
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <StatCard
+              style={statCardStyle}
+              title="Pending Requests"
+              value={pendingRequestsCount !== null ? String(pendingRequestsCount) : '15'}
+              change="-3"
+              icon={Calendar}
+              trend="down"
+            />
+          </div>
         </div>
-
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div style={weeklyAttendanceContainerStyle} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Attendance Chart */}
-          <Card className="dashboard-card">
+          <Card style={weeklyAttendanceContainerStyle} className="dashboard-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="w-5 h-5 text-primary" />
@@ -572,7 +612,7 @@ const Dashboard = () => {
         {/* Activity and Events */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Activities */}
-          <Card className="dashboard-card">
+          <Card style={recentActivities} className="dashboard-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Bell className="w-5 h-5 text-primary" />
@@ -680,39 +720,49 @@ const Dashboard = () => {
       </div>
 
       {/* Personal Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Hours This Week"
-          value={hoursThisWeek !== null ? String(hoursThisWeek) : '--'}
-          change="+2.5"
-          icon={Clock}
-          trend="up"
-        />
-        <StatCard
-          title="Attendance Rate"
-          value={attendanceRateUser || '--'}
-          change="+2%"
-          icon={UserCheck}
-          trend="up"
-        />
-        <StatCard
-          title="Current Salary"
-          value={currentSalary !== null ? `$${Number(currentSalary).toLocaleString()}` : '--'}
-          icon={DollarSign}
-        />
-        <StatCard
-          title="Leave Balance"
-          value={leaveBalanceDays !== null ? `${leaveBalanceDays} days` : '--'}
-          icon={Calendar}
-        />
+      <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <StatCard
+            style={statCardStyle}
+            title="Hours This Week"
+            value={hoursThisWeek !== null ? String(hoursThisWeek) : '--'}
+            change="+2.5"
+            icon={Clock}
+            trend="up"
+          />
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <StatCard
+            style={statCardStyle}
+            title="Attendance Rate"
+            value={attendanceRateUser || '--'}
+            change="+2%"
+            icon={UserCheck}
+            trend="up"
+          />
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <StatCard
+            style={statCardStyle}
+            title="Current Salary"
+            value={currentSalary !== null ? `$${Number(currentSalary).toLocaleString()}` : '--'}
+            icon={DollarSign}
+          />
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <StatCard
+            style={statCardStyle}
+            title="Leave Balance"
+            value={leaveBalanceDays !== null ? `${leaveBalanceDays} days` : '--'}
+            icon={Calendar}
+          />
+        </div>
       </div>
 
-      
-
       {/* Personal Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div style={marginStyle} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Salary Progression */}
-        <Card className="dashboard-card">
+        <Card style={marginStyle} className="dashboard-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5 text-primary" />
@@ -784,7 +834,7 @@ const Dashboard = () => {
       {/* Personal Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* My Recent Activity */}
-        <Card className="dashboard-card">
+        <Card style={marginStyle} className="dashboard-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Activity className="w-5 h-5 text-primary" />
