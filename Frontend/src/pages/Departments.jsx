@@ -17,6 +17,23 @@ import { toast } from 'react-toastify';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Departments = () => {
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  };
+
   const { isHR } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -146,7 +163,7 @@ const Departments = () => {
           <p className="text-muted-foreground">Organize and manage company departments</p>
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild style={{ ...marginStyle, ...button }}>
             <Button className="btn-gradient">
               <Plus className="w-4 h-4 mr-2" />
               Add Department
@@ -222,63 +239,71 @@ const Departments = () => {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-primary" />
+      <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Departments</p>
+                  <p className="text-xl font-bold">{departments.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Departments</p>
-                <p className="text-xl font-bold">{departments.length}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Employees</p>
+                  <p className="text-xl font-bold">{totalEmployees}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
-                <Users className="w-4 h-4 text-success" />
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Budget</p>
+                  <p className="text-xl font-bold">${(totalBudget / 1000000).toFixed(1)}M</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Employees</p>
-                <p className="text-xl font-bold">{totalEmployees}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Avg Team Size</p>
+                  <p className="text-xl font-bold">{Math.round(totalEmployees / departments.length)}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Budget</p>
-                <p className="text-xl font-bold">${(totalBudget / 1000000).toFixed(1)}M</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Avg Team Size</p>
-                <p className="text-xl font-bold">{Math.round(totalEmployees / departments.length)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Search */}
-      <Card className="dashboard-card">
+      <Card style={marginStyle} className="dashboard-card">
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
@@ -295,7 +320,7 @@ const Departments = () => {
       {/* Departments Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredDepartments.map((department) => (
-          <Card key={department.id} className="dashboard-card hover:shadow-card-hover transition-all duration-200">
+          <Card style={marginStyle} key={department.id} className="dashboard-card hover:shadow-card-hover transition-all duration-200">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
