@@ -444,21 +444,23 @@ const Dashboard = () => {
     return (
       <div className="container mx-auto p-6 space-y-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-hero rounded-2xl p-8 text-white">
+        <div className="bg-gradient-hero rounded-2xl p-8 
+                        text-black dark:text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
-              <p className="text-blue-100">Here's what's happening in your organization today.</p>
+              <h1 className="text-3xl font-bold mb-2">{`Welcome back, ${user?.name}!`}</h1>
+              <p className="text-gray-700 dark:text-blue-100">
+                Here's what's happening in your organization today.
+              </p>
             </div>
             <div className="hidden md:block">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-2xl font-bold">{new Date().toLocaleDateString()}</div>
-                <div className="text-sm text-blue-100">Today</div>
+              <div className="bg-white/90 dark:bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <div className="text-2xl font-bold text-black dark:text-white">{new Date().toLocaleDateString()}</div>
+                <div className="text-sm text-gray-600 dark:text-blue-100">Today</div>
               </div>
             </div>
           </div>
         </div>
-
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
@@ -658,7 +660,7 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-hero rounded-2xl p-8 text-white">
+      <div className="bg-gradient-hero rounded-2xl p-8 text-black dark:text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>

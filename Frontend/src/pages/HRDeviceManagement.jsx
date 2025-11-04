@@ -363,7 +363,7 @@ const HRDeviceManagement = () => {
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Header */}
-      <div className="bg-gradient-hero rounded-2xl p-8 text-white">
+      <div className="bg-gradient-hero rounded-2xl p-8 text-black dark:text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Device Management</h1>

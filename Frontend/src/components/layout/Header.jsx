@@ -22,16 +22,15 @@ import {
   Users,
   Calendar,
   Building2,
-  ClipboardList,
   DollarSign,
   UserCheck,
   Briefcase,
+  Laptop,
   Sun,
   Moon,
   Monitor,
-  Laptop
 } from 'lucide-react';
-import logo  from '../../assets/download.jpg';
+import logo from '../../assets/download.jpg';
 
 export const Header = () => {
   const { user, logout, isHR } = useAuth();
@@ -39,22 +38,17 @@ export const Header = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Safely resolve department name whether it's an id string, plain string, or populated object
   const getDepartmentName = (dept) => {
-    if (!dept) return "";
-    if (typeof dept === "string") return dept; // could be a name or an id string
-    if (typeof dept === "object" && dept.name) return dept.name;
-    return "";
+    if (!dept) return '';
+    if (typeof dept === 'string') return dept;
+    if (typeof dept === 'object' && dept.name) return dept.name;
+    return '';
   };
 
   const toggleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('system');
-    } else {
-      setTheme('light');
-    }
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
   };
 
   const getThemeIcon = () => {
@@ -67,7 +61,6 @@ export const Header = () => {
         return Monitor;
     }
   };
-
   const ThemeIcon = getThemeIcon();
 
   const handleLogout = () => {
@@ -75,36 +68,42 @@ export const Header = () => {
     navigate('/auth');
   };
 
-  const navigationItems = isHR ? [
-    { label: 'Dashboard', href: '/dashboard', icon: Building2 },
-    { label: 'Employees', href: '/employees', icon: Users },
-    { label: 'Departments', href: '/departments', icon: Building2 },
-    { label: 'Attendance', href: '/attendance', icon: UserCheck },
-    { label: 'Salary', href: '/salary', icon: DollarSign },
-    { label: 'Leave Requests', href: '/leave-requests', icon: Calendar },
-    { label: 'Recruitment', href: '/recruitment', icon: Briefcase },
-    { label: 'Device Management', href: '/device-management', icon: Laptop },
-  ] : [
-    { label: 'Dashboard', href: '/dashboard', icon: Building2 },
-    { label: 'My Profile', href: '/profile', icon: User },
-    { label: 'Attendance', href: '/attendance', icon: UserCheck },
-    { label: 'My Salary', href: '/salary', icon: DollarSign },
-    { label: 'Leave Requests', href: '/leave-requests', icon: Calendar },
-    { label: 'Calendar', href: '/calendar', icon: Calendar },
-    { label: 'My Devices', href: '/my-devices', icon: Laptop },
-  ];
+  const navigationItems = isHR
+    ? [
+        { label: 'Dashboard', href: '/dashboard', icon: Building2 },
+        { label: 'Employees', href: '/employees', icon: Users },
+        { label: 'Departments', href: '/departments', icon: Building2 },
+        { label: 'Attendance', href: '/attendance', icon: UserCheck },
+        { label: 'Salary', href: '/salary', icon: DollarSign },
+        { label: 'Leave Requests', href: '/leave-requests', icon: Calendar },
+        { label: 'Recruitment', href: '/recruitment', icon: Briefcase },
+        { label: 'Device Management', href: '/device-management', icon: Laptop },
+        { label: 'Calendar', href: '/calendar', icon: Calendar },
+        { label: "Goals", href: "/goals", icon: Briefcase },
+        { label: "Settings ", href: "/settings", icon: Settings },
+      ]
+    : [
+        { label: 'Dashboard', href: '/dashboard', icon: Building2 },
+        { label: 'My Profile', href: '/profile', icon: User },
+        { label: 'Attendance', href: '/attendance', icon: UserCheck },
+        { label: 'My Salary', href: '/salary', icon: DollarSign },
+        { label: 'Leave Requests', href: '/leave-requests', icon: Calendar },
+        { label: 'Calendar', href: '/calendar', icon: Calendar },
+        { label: 'My Devices', href: '/my-devices', icon: Laptop },
+        { label: "Goals", href: "/goals", icon: Briefcase },
+        { label: "Settings ", href: "/settings", icon: Settings },
+      ];
 
   return (
-    <header className="nav-header sticky top-0 z-50">
+    <header className="sticky top-0 z-50 lg:hidden bg-background border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link 
-            to="/dashboard" 
+          <Link
+            to="/dashboard"
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              {/* <Building2 className="w-5 h-5 text-white" /> */}
               <img src={logo} alt="GammoDA Logo" className="w-8 h-8 object-cover" />
             </div>
             <div>
@@ -113,61 +112,31 @@ export const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-primary hover:bg-accent transition-all duration-200"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User Menu */}
+          {/* User & Menu */}
           <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={toggleTheme}
-              className="relative"
               title={`Current theme: ${theme}`}
             >
               <ThemeIcon className="w-5 h-5" />
             </Button>
 
-            {/* Notifications
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="w-5 h-5" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center">
-                <span className="text-[10px] text-destructive-foreground font-medium">3</span>
-              </div>
-            </Button> */}
-
-            {/* User Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2 hover:bg-accent">
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={user?.avatar} alt={user?.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user?.name?.split(' ').map(n => n[0]).join('')}
+                      {user?.name?.split(' ').map((n) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium">{user?.name}</p>
-                    <div className="flex items-center space-x-1">
-                      <Badge variant={isHR ? "default" : "secondary"} className="text-xs">
-                        {isHR ? 'HR Manager' : 'Employee'}
-                      </Badge>
-                    </div>
+                    <Badge variant={isHR ? 'default' : 'secondary'} className="text-xs">
+                      {isHR ? 'HR Manager' : 'Employee'}
+                    </Badge>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -175,7 +144,7 @@ export const Header = () => {
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  <Badge variant={isHR ? "default" : "secondary"} className="text-xs mt-1">
+                  <Badge variant={isHR ? 'default' : 'secondary'} className="text-xs mt-1">
                     {getDepartmentName(user?.department)}
                   </Badge>
                 </div>
@@ -200,11 +169,11 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden"
+              className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -212,9 +181,8 @@ export const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t animate-fade-in">
+          <div className="py-4 border-t animate-fade-in">
             <nav className="flex flex-col space-y-2">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
