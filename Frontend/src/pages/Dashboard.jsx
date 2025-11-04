@@ -669,7 +669,7 @@ const Dashboard = () => {
           <div className="hidden md:block">
             <Button 
               variant="secondary" 
-              className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
+              className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20"
               onClick={() => navigate('/attendance')}
             >
               <Clock className="w-4 h-4 mr-2" />

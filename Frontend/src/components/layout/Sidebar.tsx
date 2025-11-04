@@ -215,6 +215,56 @@ export const Sidebar = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {/* <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent ${
+                isCollapsed ? "p-0" : ""
+              }`}
+            >
+              <Avatar className="w-8 h-8 flex-shrink-0">
+                <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+                  {user?.name?.split(" ").map((n) => n[0]).join("")}
+                </AvatarFallback>
+              </Avatar>
+              {!isCollapsed && (
+                <div className="flex-1 text-left ml-2 min-w-0">
+                  <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    {isHR ? "HR" : "Employee"}
+                  </Badge>
+                </div>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="start" className="w-56">
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium">{user?.name}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <Badge variant={isHR ? "default" : "secondary"} className="text-xs mt-1">
+                {getDepartmentName(user?.department)}
+              </Badge>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/profile" className="flex items-center">
+                <User className="w-4 h-4 mr-2" /> Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="flex items-center">
+                <Settings className="w-4 h-4 mr-2" /> Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+              <LogOut className="w-4 h-4 mr-2" /> Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu> */}
 
         <Button
           variant="ghost"

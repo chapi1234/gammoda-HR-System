@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import logo from "../../assets/download.jpg";
 import { toast } from "react-toastify";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const AuthForm = () => {
   const { login, signup } = useAuth();
@@ -64,7 +65,7 @@ export const AuthForm = () => {
 
   const [departments, setDepartments] = useState([]); // [{id,name}]
   const [loadingDepartments, setLoadingDepartments] = useState(false);
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = API_URL;
 
   const fetchDepartments = async () => {
     setLoadingDepartments(true);
@@ -113,8 +114,7 @@ export const AuthForm = () => {
         name: signupForm.name,
         email: signupForm.email,
         role: signupForm.role,
-  // Send departmentId for backend to store as ObjectId
-  departmentId: signupForm.department,
+        departmentId: signupForm.department,
         avatar: signupForm.avatar || "",
         password: signupForm.password,
         confirmPassword: signupForm.confirmPassword,
@@ -129,20 +129,11 @@ export const AuthForm = () => {
     }
   };
 
-  // const handleForgotEmail = (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   // Simulate sending email
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     setMode("forgot-code");
-  //   }, 1000);
-  // };
   const handleForgotEmail = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/forget-password", {
+      const res = await axios.post(`${API_BASE}/api/auth/forget-password`, {
         email: forgotForm.email,
       });
       toast.success(res.data.message);
@@ -160,7 +151,7 @@ export const AuthForm = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/verify-otp", {
+      const res = await axios.post(`${API_BASE}/api/auth/verify-otp`, {
         email: forgotForm.email.trim(),
         otp: otpCode.trim(),   // ✅ make sure OTP is a string without spaces
       });
@@ -182,7 +173,7 @@ export const AuthForm = () => {
     }
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/reset-password", {
+      const res = await axios.post(`${API_BASE}/api/auth/reset-password`, {
         resetToken,
         newPassword: forgotForm.newPassword,
         confirmNewPassword: forgotForm.confirmPassword,
@@ -215,7 +206,7 @@ export const AuthForm = () => {
               className="w-16 h-16 object-cover"
             />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">GammoDA</h1>
+          <h1 className="text-3xl font-bold text-black dark:text-white mb-2">GammoDA</h1>
           <p className="text-blue-100">HR Management System</p>
         </div>
         <Card className="shadow-2xl border-0">

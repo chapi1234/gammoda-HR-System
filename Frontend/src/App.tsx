@@ -29,61 +29,40 @@ import { Sidebar } from "./components/layout/Sidebar";
 
 const queryClient = new QueryClient();
 
-// const ProtectedRoute = ({ children }) => {
-//   const { isAuthenticated, loading } = useAuth();
-  
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center">
-//         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-//       </div>
-//     );
-//   }
-  
-//   if (!isAuthenticated) {
-//     return <AuthForm />;
-//   }
-  
-//   return (
-//  <div className="min-h-screen w-full flex flex-col">
-//   <Header />
-//   <main className="flex flex-1 gap-5 pt-0 w-full">
-//     <Sidebar />
-//    <div className="flex-1 min-w-0">
-//       {children}
-//     </div>
-//   </main>
-// </div>
-//   );
-// }
+  const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
 
-  if (loading) {
+    if (!isAuthenticated) return <AuthForm />;
+
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen w-full flex flex-col">
+        {/* Header visible only on sm/md */}
+        <div className="block lg:hidden">
+          <Header />
+        </div>
+
+        <div className="flex flex-1">
+          {/* Sidebar visible only on lg */}
+          <div className="hidden lg:flex lg:flex-shrink-0">
+            <Sidebar />
+          </div>
+
+          {/* Main content */}
+          <main className="flex-1 min-w-0">
+            {children}
+          </main>
+        </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) return <AuthForm />;
-
-  return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row">
-      {/* Header for sm/md */}
-      <Header />
-
-      <main className="flex-1 flex">
-        {/* Sidebar only shows lg */}
-        <Sidebar />
-
-        <div className="flex-1 min-w-0">{children}</div>
-      </main>
-    </div>
-  );
-};
+  };
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
