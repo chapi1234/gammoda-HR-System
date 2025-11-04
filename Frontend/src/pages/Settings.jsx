@@ -17,6 +17,28 @@ import {
 import { toast } from 'react-toastify';
 
 const Settings = () => {
+
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "40px"
+  };
+
+  const button = {
+    width: "200px"
+  };
+
+  const colorMargin = {
+    marginBottom: "10px"
+  };
+
   const { user } = useAuth();
   const { theme, setTheme, colorScheme, setColorScheme } = useTheme();
   const [settings, setSettings] = useState({
@@ -90,14 +112,14 @@ const Settings = () => {
             <h1 className="text-3xl font-bold text-foreground">Settings</h1>
             <p className="text-muted-foreground">Customize your experience and preferences</p>
           </div>
-          <Button onClick={handleSaveSettings} className="btn-gradient">
+          <Button style={button} onClick={handleSaveSettings} className="btn-gradient">
             <Save className="w-4 h-4 mr-2" />
             Save Settings
           </Button>
         </div>
 
         <Tabs defaultValue="appearance" className="w-full">
-          <TabsList className="flex flex-wrap w-full gap-2 mb-6">
+          <TabsList style={marginStyle} className="flex flex-wrap w-full gap-2 mb-6">
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
@@ -151,6 +173,7 @@ const Settings = () => {
                     <div className="grid grid-cols-3 gap-3">
                       {colorSchemes.map((scheme) => (
                         <div
+                          style={colorMargin}
                           key={scheme.value}
                           className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:bg-accent hover:scale-[1.02] ${
                             colorScheme === scheme.value ? 'ring-2 ring-primary bg-accent' : ''
