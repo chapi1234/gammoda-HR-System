@@ -18,6 +18,24 @@ import { toast } from 'react-toastify';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Calendar = () => {
+
+    const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  };
+
   const { user, isHR } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEventDialog, setShowEventDialog] = useState(false);
@@ -177,7 +195,7 @@ const Calendar = () => {
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <div>
+        <div style={marginStyle}>
           <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
           <p className="text-muted-foreground">
             {isHR ? 'Manage company events and schedules' : 'View your schedule and company events'}
@@ -185,7 +203,7 @@ const Calendar = () => {
         </div>
         {isHR && (
           <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
-            <DialogTrigger asChild>
+            <DialogTrigger asChild style={{ ...marginStyle, ...button}}>
               <Button className="btn-gradient">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Event
@@ -287,11 +305,11 @@ const Calendar = () => {
       </div>
 
       {/* Calendar Controls */}
-      <Card className="dashboard-card">
+      <Card style={marginStyle} className="dashboard-card">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <div className="flex flex-wrap items-center gap-4 mb-5">
+            <div className="relative flex-1 min-w-full sm:min-w-[250px] md:min-w-[300px] lg:min-w-[240px]">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground"  />
               <Input
                 placeholder="Search events..."
                 value={searchTerm}
@@ -299,37 +317,41 @@ const Calendar = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Events</SelectItem>
-                {eventTypes.map(type => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={viewMode} onValueChange={setViewMode}>
-              <SelectTrigger className="w-full md:w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="month">Month</SelectItem>
-                <SelectItem value="week">Week</SelectItem>
-                <SelectItem value="day">Day</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex-1 min-w-full sm:min-w-[250px] md:min-w-[220px] lg:min-w-[180px]">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Events</SelectItem>
+                  {eventTypes.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-full sm:min-w-[250px] md:min-w-[220px] lg:min-w-[180px]">
+              <Select value={viewMode} onValueChange={setViewMode}>
+                <SelectTrigger className="w-full md:w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">Month</SelectItem>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="day">Day</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
-        <div className="lg:col-span-2">
+        <div style={marginStyle} className="lg:col-span-2">
           <Card className="dashboard-card">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -388,9 +410,9 @@ const Calendar = () => {
         </div>
 
         {/* Events Sidebar */}
-        <div className="space-y-6">
+        <div style={marginStyle} className="space-y-6">
           {/* Selected Date Events */}
-          <Card className="dashboard-card">
+          <Card style={marginStyle} className="dashboard-card">
             <CardHeader>
               <CardTitle className="text-lg">
                 Events for {selectedDate.toLocaleDateString()}
