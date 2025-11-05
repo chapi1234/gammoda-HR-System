@@ -21,6 +21,22 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Salary = () => {
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  }
   const { isHR, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
@@ -296,7 +312,7 @@ const Salary = () => {
         {isHR && (
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button className="btn-gradient">
+              <Button className="btn-gradient" style={{ ...marginStyle, ...button }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Salary Record
               </Button>
@@ -376,8 +392,8 @@ const Salary = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="dashboard-card">
+      <div style={marginStyle} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card style={marginStyle} className="dashboard-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Payroll</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -391,7 +407,7 @@ const Salary = () => {
           </CardContent>
         </Card>
 
-        <Card className="dashboard-card">
+        <Card style={marginStyle} className="dashboard-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Salary</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -404,7 +420,7 @@ const Salary = () => {
           </CardContent>
         </Card>
 
-        <Card className="dashboard-card">
+        <Card style={marginStyle} className="dashboard-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
