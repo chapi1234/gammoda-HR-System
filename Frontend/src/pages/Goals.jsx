@@ -52,6 +52,24 @@ import { postActivity } from '../lib/postActivity';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Goals = () => {
+
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  }
+
   const { user } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [goals, setGoals] = useState([]);
@@ -255,12 +273,8 @@ const Goals = () => {
               Track your progress and celebrate your achievements
             </p>
           </div>
-          {/* <Button className="btn-gradient">
-            <Target className="w-4 h-4 mr-2" />
-            Set New Goal
-          </Button> */}
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
+            <DialogTrigger asChild style={{ ...marginStyle, ...button }}>
               <Button className="btn-gradient w-full md:w-200px">
                 <Target className="w-4 h-4 mr-2" />
                 Set New Goal
@@ -348,52 +362,58 @@ const Goals = () => {
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="dashboard-card">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Target className="w-6 h-6 text-primary" />
+        <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <Card className="dashboard-card">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Target className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{activeGoals.length}</p>
+                    <p className="text-sm text-muted-foreground">Active Goals</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{activeGoals.length}</p>
-                  <p className="text-sm text-muted-foreground">Active Goals</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card className="dashboard-card">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-500" />
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <Card className="dashboard-card">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div>
+                      <p className="text-2xl font-bold">
+                      {activeGoals.length > 0 ? Math.round(activeGoals.reduce((acc, goal) => acc + (Number(goal.progress) || 0), 0) / activeGoals.length) : 0}%
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Average Progress
+                    </p>
+                  </div>
                 </div>
-                <div>
-                    <p className="text-2xl font-bold">
-                    {activeGoals.length > 0 ? Math.round(activeGoals.reduce((acc, goal) => acc + (Number(goal.progress) || 0), 0) / activeGoals.length) : 0}%
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Average Progress
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card className="dashboard-card">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-yellow-500/10 rounded-lg flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-yellow-500" />
+          <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+            <Card className="dashboard-card">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-yellow-500/10 rounded-lg flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{achievements.length}</p>
+                    <p className="text-sm text-muted-foreground">Achievements</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{achievements.length}</p>
-                  <p className="text-sm text-muted-foreground">Achievements</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Goals and Achievements Tabs */}
@@ -409,7 +429,7 @@ const Goals = () => {
               {activeGoals.map((goal) => {
                 const CategoryIcon = getCategoryIcon(goal.category);
                 return (
-                  <Card key={goal.id} className="dashboard-card">
+                  <Card style={marginStyle} key={goal.id} className="dashboard-card">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-2">
@@ -662,7 +682,7 @@ const Goals = () => {
           <TabsContent value="achievements" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {achievements.map((achievement) => (
-                <Card key={achievement.id} className="dashboard-card">
+                <Card style={marginStyle} key={achievement.id} className="dashboard-card">
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
                       <div className="w-12 h-12 bg-yellow-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
