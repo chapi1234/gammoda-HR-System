@@ -193,7 +193,7 @@ export const AuthForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-3/4 sm:w-1/2 max-w-xl mx-auto"> 
+      <div className="mx-auto transition-all duration-300"  style={{ width: "var(--auth-form-width)" }} > 
         {" "}
         {/* Responsive: half screen on sm+, centered */}
         {/* Logo and Header */}
@@ -206,10 +206,10 @@ export const AuthForm = () => {
               className="w-16 h-16 object-cover"
             />
           </div>
-          <h1 className="text-3xl font-bold text-black dark:text-white mb-2">GammoDA</h1>
-          <p className="text-blue-100">HR Management System</p>
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Gamo Development Association</h1>
+          <p className="text-blue-100">Human Resource Management System</p>
         </div>
-        <Card className="shadow-2xl border-0">
+        <Card className="shadow-2xl border-0" style={{ marginTop: 15 }}>
           <CardHeader className="text-center pb-4">
             {mode === "login" && (
               <>
