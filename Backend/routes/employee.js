@@ -14,12 +14,12 @@ import { resumeUpload } from "../controllers/employeeController.js";
 
 const router = express.Router(); 
 
-router.get("/", getAllEmployees);
-router.get("/:id", getEmployeeById);
-router.post("/create", createEmployee);
+router.get("/", authorize(["hr"]), getAllEmployees);
+router.get("/:id", authorize(["employee", "hr"]), getEmployeeById);
+router.post("/create", authorize(["hr"]), createEmployee);
 router.put("/update/:id", authorize(["employee", "hr"]), updateEmployee);
-router.put("/edit/:id", authorize(["hr"]), editEmployee);
-router.delete("/delete/:id", deleteEmployee);
+router.put("/edit/:id", authorize(["employee","hr"]), editEmployee);
+router.delete("/delete/:id", authorize(["hr"]), deleteEmployee);
 router.put("/upload-resume/:id", upload.single("resume"), resumeUpload);
 
 export default router;

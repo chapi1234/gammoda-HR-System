@@ -7,6 +7,22 @@ All colors MUST be HSL for consistency across light/dark modes.
 Corporate blue theme with modern gradients and professional styling.
 */
 
+:root {
+  --auth-form-width: 25%; /* Default for large screens */
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --auth-form-width: 50%; /* Tablet */
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --auth-form-width: 95%; /* Mobile */
+  }
+}
+
 @layer base {
   :root {
     /* Core backgrounds */
