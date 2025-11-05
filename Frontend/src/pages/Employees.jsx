@@ -20,10 +20,27 @@ import { toast } from 'react-toastify';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Employees = () => {
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  }
+  
   const { isHR } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'grid' or 'table'
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
@@ -216,7 +233,7 @@ const Employees = () => {
           <p className="text-muted-foreground">Manage your organization's workforce</p>
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild style={{ ...marginStyle, ...button }}>
             <Button className="btn-gradient">
               <UserPlus className="w-4 h-4 mr-2" />
               Add Employee
@@ -325,99 +342,113 @@ const Employees = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-primary" />
+      <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Employees</p>
+                  <p className="text-xl font-bold">{employees.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Employees</p>
-                <p className="text-xl font-bold">{employees.length}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
+                  <UserPlus className="w-4 h-4 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active</p>
+                  <p className="text-xl font-bold">{employees.filter(e => e.status === 'active').length}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
-                <UserPlus className="w-4 h-4 text-success" />
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">On Leave</p>
+                  <p className="text-xl font-bold">{employees.filter(e => e.status === 'on_leave').length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-xl font-bold">{employees.filter(e => e.status === 'active').length}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Departments</p>
+                  <p className="text-xl font-bold">{departments.length}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">On Leave</p>
-                <p className="text-xl font-bold">{employees.filter(e => e.status === 'on_leave').length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dashboard-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Departments</p>
-                <p className="text-xl font-bold">{departments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
       {/* Filters and Search */}
-      <Card className="dashboard-card">
+      <Card style={marginStyle} className="dashboard-card">
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap items-center gap-4 mb-5">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-full sm:min-w-[250px] md:min-w-[300px] lg:min-w-[240px]">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search employees..."
+                placeholder="Search departments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-12 w-full"
               />
             </div>
-            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {["all", ...departmentNames].map(dept => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept === 'all' ? 'All Departments' : dept}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex space-x-2">
+
+            {/* Department Filter */}
+            <div className="flex-1 min-w-full sm:min-w-[250px] md:min-w-[220px] lg:min-w-[180px]">
+              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                <SelectTrigger className="w-full">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["all", ...departmentNames].map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept === "all" ? "All Departments" : dept}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* View Mode Buttons */}
+            <div className="flex space-x-4 w-full sm:w-auto justify-start sm:justify-between">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                variant={viewMode === "grid" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
               >
                 Grid
               </Button>
               <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
+                variant={viewMode === "table" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setViewMode('table')}
+                onClick={() => setViewMode("table")}
               >
                 Table
               </Button>
@@ -425,7 +456,6 @@ const Employees = () => {
           </div>
         </CardContent>
       </Card>
-
       {/* Employee List */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
