@@ -66,6 +66,24 @@ import {
 import { toast } from "react-toastify";
 
 const Recruitment = () => {
+
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  }
+
   const { isHR } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -565,7 +583,7 @@ const Recruitment = () => {
         </div>
         {isHR && (
           <Dialog open={showJobDialog} onOpenChange={setShowJobDialog}>
-            <DialogTrigger asChild>
+            <DialogTrigger asChild style={{ ...marginStyle, ...button }}>
               <Button className="btn-gradient">
                 <Plus className="w-4 h-4 mr-2" />
                 Post New Job
@@ -709,54 +727,59 @@ const Recruitment = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="dashboard-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalJobs}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeJobs}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently recruiting
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Applicants
-            </CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalApplicants}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Shortlisted</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{shortlistedApplicants}</div>
-            <p className="text-xs text-muted-foreground">Ready for interview</p>
-          </CardContent>
-        </Card>
+      <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalJobs}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeJobs}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently recruiting
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Applicants
+              </CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalApplicants}</div>
+              <p className="text-xs text-muted-foreground">This month</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Shortlisted</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{shortlistedApplicants}</div>
+              <p className="text-xs text-muted-foreground">Ready for interview</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -768,11 +791,11 @@ const Recruitment = () => {
 
         <TabsContent value="jobs" className="space-y-6">
           {/* Job Filters */}
-          <Card className="dashboard-card">
+          <Card style={marginStyle} className="dashboard-card">
             <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <div className="flex flex-wrap items-center gap-4 mb-5">
+                <div className="relative flex-1 min-w-full sm:min-w-[250px] md:min-w-[300px] lg:min-w-[240px]">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search jobs..."
                     value={searchTerm}
@@ -780,29 +803,33 @@ const Recruitment = () => {
                     className="pl-10"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[150px]">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status === "all"
-                          ? "All Status"
-                          : status.charAt(0).toUpperCase() + status.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+                <div className="flex-1 min-w-full sm:min-w-[250px] md:min-w-[220px] lg:min-w-[180px]">
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full md:w-[150px]">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status === "all"
+                            ? "All Status"
+                            : status.charAt(0).toUpperCase() + status.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Job Listings */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredJobs.map((job) => (
               <Card
+                style={marginStyle}
                 key={job.id}
                 className="dashboard-card hover:shadow-card-hover transition-all duration-200"
               >
@@ -857,15 +884,16 @@ const Recruitment = () => {
               </Card>
             ))}
           </div>
+
         </TabsContent>
 
         <TabsContent value="applicants" className="space-y-6">
           {/* Applicant Filters */}
-          <Card className="dashboard-card">
+          <Card style={marginStyle} className="dashboard-card">
             <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <div className="flex flex-wrap items-center gap-4 mb-5">
+                <div className="relative flex-1 min-w-full sm:min-w-[250px] md:min-w-[300px] lg:min-w-[240px]">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search applicants..."
                     value={searchTerm}
@@ -873,23 +901,25 @@ const Recruitment = () => {
                     className="pl-10"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {applicantStatusOptions.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status === "all"
-                          ? "All Status"
-                          : status
-                              .replace("_", " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex-1 min-w-full sm:min-w-[250px] md:min-w-[220px] lg:min-w-[180px]">
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {applicantStatusOptions.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status === "all"
+                            ? "All Status"
+                            : status
+                                .replace("_", " ")
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
