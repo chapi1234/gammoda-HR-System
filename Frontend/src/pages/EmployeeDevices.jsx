@@ -12,6 +12,23 @@ import {
 } from 'lucide-react';
 
 const EmployeeDevices = () => {
+
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  }
   const { user } = useAuth();
 
   // Live device state for current employee (will replace dummy data)
@@ -119,66 +136,71 @@ const EmployeeDevices = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Laptop className="w-6 h-6 text-primary" />
+      <div style={wrapperStyle} className="flex flex-wrap gap-4 mb-5">
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Laptop className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{myDevices.filter(d => d.type === 'laptop').length}</p>
+                  <p className="text-sm text-muted-foreground">Laptops</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{myDevices.filter(d => d.type === 'laptop').length}</p>
-                <p className="text-sm text-muted-foreground">Laptops</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Tablet className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{myDevices.filter(d => d.type === 'tablet').length}</p>
+                  <p className="text-sm text-muted-foreground">Tablets</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Tablet className="w-6 h-6 text-primary" />
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Smartphone className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{myDevices.filter(d => d.type === 'phone').length}</p>
+                  <p className="text-sm text-muted-foreground">Phones</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{myDevices.filter(d => d.type === 'tablet').length}</p>
-                <p className="text-sm text-muted-foreground">Tablets</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div style={statCardsContainerStyle} className="flex-1 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]">
+          <Card className="dashboard-card">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Monitor className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{myDevices.filter(d => ['monitor', 'accessory'].includes(d.type)).length}</p>
+                  <p className="text-sm text-muted-foreground">Accessories</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Smartphone className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{myDevices.filter(d => d.type === 'phone').length}</p>
-                <p className="text-sm text-muted-foreground">Phones</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Monitor className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{myDevices.filter(d => ['monitor', 'accessory'].includes(d.type)).length}</p>
-                <p className="text-sm text-muted-foreground">Accessories</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Devices List */}
-      <Card className="dashboard-card">
+      <Card style={marginStyle} className="dashboard-card">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Laptop className="w-5 h-5 text-primary" />
@@ -234,7 +256,7 @@ const EmployeeDevices = () => {
       </Card>
 
       {/* Device History */}
-      <Card className="dashboard-card">
+      <Card style={marginStyle} className="dashboard-card">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Clock className="w-5 h-5 text-primary" />
