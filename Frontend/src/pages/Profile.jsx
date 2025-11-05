@@ -37,6 +37,24 @@ import {
 import { toast } from "react-toastify";
 
 const Profile = () => {
+
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const buttonStyle = {
+    width: "200px"
+  }; 
+
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const getDepartmentName = (dept) => {
@@ -192,7 +210,7 @@ const Profile = () => {
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div style={marginStyle} className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
           <div>
             <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
             <p className="text-muted-foreground">
@@ -200,6 +218,7 @@ const Profile = () => {
             </p>
           </div>
           <Button
+            style={buttonStyle}
             onClick={() => setIsEditing(!isEditing)}
             variant={isEditing ? "outline" : "default"}
             className={!isEditing ? "btn-gradient" : ""}
@@ -445,7 +464,7 @@ const Profile = () => {
 
                 <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div style={marginStyle} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="emergencyContact">Emergency Contact</Label>
                     <Input
@@ -479,14 +498,16 @@ const Profile = () => {
                 </div>
 
                 {isEditing && (
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end space-x-4">
                     <Button
+                    style={buttonStyle}
                       variant="outline"
                       onClick={() => setIsEditing(false)}
-                    >
+                    > 
                       Cancel
                     </Button>
                     <Button
+                      style={buttonStyle}
                       onClick={handleProfileUpdate}
                       className="btn-gradient"
                     >
