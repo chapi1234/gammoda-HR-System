@@ -44,8 +44,8 @@ export default function About() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 className="mb-6 text-gray-900">About {siteConfig.companyShortName}</h1>
-          <p className="text-gray-600 text-lg">
+          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">About {siteConfig.companyShortName}</h1>
+          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
             For over 15 years, we've been dedicated to creating positive, lasting change in
             communities through sustainable development programs and genuine partnerships.
           </p>
@@ -57,8 +57,8 @@ export default function About() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2">
             <div>
-              <h2 className="mb-4 text-gray-900">Our Mission</h2>
-              <p className="text-gray-600">
+              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Our Mission</h2>
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">
                 To empower communities through sustainable development initiatives that address
                 fundamental needs in water, education, healthcare, and economic opportunity. We
                 believe in building capacity from within, creating solutions that communities can
@@ -66,8 +66,8 @@ export default function About() {
               </p>
             </div>
             <div>
-              <h2 className="mb-4 text-gray-900">Our Vision</h2>
-              <p className="text-gray-600">
+              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Our Vision</h2>
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">
                 A world where every community has the resources, knowledge, and capacity to thrive
                 independently. We envision self-reliant communities that can solve their own
                 challenges, create opportunities, and build a better future for generations to come.
@@ -81,8 +81,8 @@ export default function About() {
       <section className="py-20 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-gray-900">Our Values</h2>
-            <p className="text-gray-600">The principles that guide our work and define who we are</p>
+            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Our Values</h2>
+            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">The principles that guide our work and define who we are</p>
           </div>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {values.map((value, index) => {
@@ -93,7 +93,7 @@ export default function About() {
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                       <Icon className="h-6 w-6 text-blue-600" />
                     </div>
-                    <h3 className="mb-2 text-gray-900">{value.title}</h3>
+                    <h3 style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }}  className="mb-2 text-gray-900">{value.title}</h3>
                     <p className="text-gray-600 text-sm">{value.description}</p>
                   </CardContent>
                 </Card>
@@ -107,8 +107,8 @@ export default function About() {
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-4xl px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-gray-900">Our Journey</h2>
-            <p className="text-gray-600">Key milestones in our mission to create lasting impact</p>
+            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Our Journey</h2>
+            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">Key milestones in our mission to create lasting impact</p>
           </div>
           <div className="relative">
             <div className="absolute left-8 top-0 h-full w-0.5 bg-blue-200" />
@@ -132,8 +132,8 @@ export default function About() {
       <section className="py-20 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-gray-900">Our Team</h2>
-            <p className="text-gray-600">
+            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Our Team</h2>
+            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">
               Passionate professionals from diverse backgrounds, united by a common purpose
             </p>
           </div>
@@ -141,7 +141,7 @@ export default function About() {
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gray-200" />
-                <h3 className="mb-1 text-gray-900">Development Experts</h3>
+                <h3 style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-1 text-gray-900">Development Experts</h3>
                 <p className="text-gray-600 text-sm">
                   Specialists in community development, project management, and capacity building
                 </p>
@@ -150,7 +150,7 @@ export default function About() {
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gray-200" />
-                <h3 className="mb-1 text-gray-900">Technical Professionals</h3>
+                <h3 style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-1 text-gray-900">Technical Professionals</h3>
                 <p className="text-gray-600 text-sm">
                   Engineers, educators, healthcare workers, and agricultural specialists
                 </p>
@@ -159,7 +159,7 @@ export default function About() {
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gray-200" />
-                <h3 className="mb-1 text-gray-900">Support Staff</h3>
+                <h3 style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-1 text-gray-900">Support Staff</h3>
                 <p className="text-gray-600 text-sm">
                   Finance, HR, communications, and operations teams ensuring smooth execution
                 </p>

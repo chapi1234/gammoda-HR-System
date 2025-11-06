@@ -127,8 +127,8 @@ export default function Careers() {
       {/* Hero */}
   <section className="bg-linear-to-br from-blue-50 to-indigo-100 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 className="mb-6 text-gray-900">Join Our Team</h1>
-          <p className="text-gray-600 text-lg">
+          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Join Our Team</h1>
+          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
             Make a meaningful impact by joining our team of dedicated professionals working to
             transform communities and create lasting change.
           </p>

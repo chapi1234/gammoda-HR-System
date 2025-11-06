@@ -36,13 +36,13 @@ export default function Home() {
       <SEO />
       
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-20 lg:py-32">
+      <section className="relative bg-gradient-to-br from-blue-30 to-indigo-100 py-20 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="mb-6 text-gray-900">
+            <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">
               {siteConfig.tagline}
             </h1>
-            <p className="mb-8 text-gray-600 text-lg">
+            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-gray-600 text-lg">
               Join us in making a lasting difference in communities across the region. Together,
               we create opportunities, build capacity, and transform lives.
             </p>
@@ -87,14 +87,14 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <h2 className="mb-6 text-gray-900">Who We Are</h2>
-              <p className="mb-4 text-gray-600">
+              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Who We Are</h2>
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-600">
                 {siteConfig.companyName} is a pioneering development organization committed to
                 creating sustainable change in communities across the region. Since our founding,
                 we've been at the forefront of community empowerment, social innovation, and
                 sustainable development.
               </p>
-              <p className="mb-6 text-gray-600">
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-600">
                 Our multidisciplinary team works hand-in-hand with local communities to identify
                 needs, co-create solutions, and build lasting capacity for self-reliance.
               </p>
@@ -119,8 +119,8 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-gray-900">Featured Projects</h2>
-            <p className="text-gray-600">
+            <h2 style={{ fontSize: "2.3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Featured Projects</h2>
+            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">
               Discover our impact across communities through transformative initiatives
             </p>
           </div>
@@ -150,10 +150,10 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-blue-600 py-20">
+      <section className="bg-blue-200 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h2 className="mb-4 text-white">Join Our Team</h2>
-          <p className="mb-8 text-blue-100 text-lg">
+          <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-black">Join Our Team</h2>
+          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-black-100">
             We're looking for passionate individuals who want to make a real difference.
             Explore our current openings and start your journey with us.
           </p>

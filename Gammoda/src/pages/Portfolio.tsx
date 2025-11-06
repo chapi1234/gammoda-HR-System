@@ -78,8 +78,8 @@ export default function Portfolio() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 className="mb-6 text-gray-900">Our Projects</h1>
-          <p className="text-gray-600 text-lg">
+          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Our Projects</h1>
+          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
             Transforming communities through sustainable development initiatives across multiple sectors
           </p>
         </div>
@@ -138,8 +138,8 @@ export default function Portfolio() {
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="rounded-2xl bg-blue-600 p-12 text-center text-white">
-            <h2 className="mb-4">Creating Lasting Impact</h2>
-            <p className="mb-8 text-blue-100 text-lg">
+            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4">Creating Lasting Impact</h2>
+            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-blue-100 text-lg">
               Every project we undertake is designed with sustainability in mind, ensuring
               communities can maintain and build upon the progress we make together.
             </p>

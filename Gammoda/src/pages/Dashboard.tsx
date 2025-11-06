@@ -129,8 +129,8 @@ export default function Dashboard() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-gray-900">Welcome back, {candidateData?.name || user?.name}!</h1>
-              <p className="text-gray-600">Manage your profile and track your applications</p>
+              <h1 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-900">Welcome back, {candidateData?.name || user?.name}!</h1>
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">Manage your profile and track your applications</p>
             </div>
             <Button variant="outline" onClick={logout} className="gap-2">
               <LogOut className="h-4 w-4" />
@@ -155,7 +155,7 @@ export default function Dashboard() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Personal Information</CardTitle>
+                    <CardTitle style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }}>Personal Information</CardTitle>
                     <Button
                       variant="outline"
                       size="sm"
