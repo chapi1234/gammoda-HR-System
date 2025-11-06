@@ -6,8 +6,8 @@ export const siteConfig = {
   tagline: "Building Communities, Empowering Lives",
   description: "A leading development organization committed to sustainable community development and social transformation.",
   email: "careers@gamoda.org",
-  phone: "+1 (555) 123-4567",
-  address: "123 Development Drive, Community City, CC 12345",
+  phone: "+251900000000",
+  address: "Secha Bekele-Mola Arbaminch, Ethiopia",
   social: {
     linkedin: "https://linkedin.com/company/gamoda",
     twitter: "https://twitter.com/gamoda",
