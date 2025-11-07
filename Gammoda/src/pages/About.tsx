@@ -2,6 +2,7 @@ import { Users, Target, Heart, Award } from "lucide-react";
 import SEO from "../components/SEO";
 import { Card, CardContent } from "../components/ui/card";
 import { siteConfig } from "../config/siteConfig";
+import { motion } from "framer-motion";
 
 export default function About() {
   const values = [
@@ -42,15 +43,62 @@ export default function About() {
       <SEO title="About Us" description={`Learn about ${siteConfig.companyName}'s mission, values, and impact on communities.`} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+      <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="relative py-20 lg:py-32 flex items-center"
+      >
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">About {siteConfig.companyShortName}</h1>
-          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
-            For over 15 years, we've been dedicated to creating positive, lasting change in
-            communities through sustainable development programs and genuine partnerships.
-          </p>
+          <motion.div
+            className="mx-auto max-w-3xl text-center"
+            initial={{ opacity: 0, y: 50 }}   // initial entrance
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          >
+            {/* Title */}
+            <motion.h1
+              style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              className="mb-6 text-gray-900"
+              animate={{
+                y: [0, -10, 0, 10, 0],   // continuous vertical motion
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1.2,              
+              }}
+            >
+              About GamoDA
+            </motion.h1>
+
+            {/* Description */}
+            <motion.p
+              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              className="mb-8 text-gray-600 text-lg"
+              animate={{
+                x: [0, 10, 0, -10, 0],   // continuous side-to-side motion
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1.2,
+              }}
+            >
+              The Gamo Development Association (GamoDA) is a community-driven organization dedicated to advancing the sustainable 
+              development of the Gamo Zone, headquartered in Arba Minch City. Since its establishment, GamoDA has been at the forefront 
+              of empowering communities through innovative and inclusive development programs that address the real needs of the people.
+
+              Our initiatives span across education, agriculture, tourism, water resource management, environmental conservation, health,
+              and local enterprise support, all designed to improve the quality of life and foster long-term prosperity. By working hand
+              in hand with local communities, government bodies, and development partners, GamoDA ensures that growth is both equitable and impactful.
+
+              At its core, GamoDA believes that true development begins within the community. Every initiative reflects our commitment to empower
+              individuals, strengthen social bonds, and build a self-reliant and prosperous Gamo society for generations to come.
+            </motion.p>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Mission & Vision */}
       <section className="py-20 bg-white">
@@ -80,8 +128,8 @@ export default function About() {
       {/* Values */}
       <section className="py-20 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 text-center">
-            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Our Values</h2>
+          <div className="mb-12 py-20 rounded-lg text-center" style={{background: "var(--div-gradient)"}}>
+            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive"}} className="mb-4 text-gray-900">Our Values</h2>
             <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">The principles that guide our work and define who we are</p>
           </div>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">

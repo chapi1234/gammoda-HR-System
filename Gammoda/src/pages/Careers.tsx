@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { apiClient } from "../utils/api";
 import { apiEndpoints } from "../config/apiConfig";
 import { JobsResponse } from "../types";
+import { motion } from "framer-motion";
 
 export default function Careers() {
   const [jobs, setJobs] = useState<JobsResponse | null>(null);
@@ -125,15 +126,50 @@ export default function Careers() {
       />
 
       {/* Hero */}
-  <section className="bg-linear-to-br from-blue-50 to-indigo-100 py-20">
+      <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="py-20"
+        initial={{ opacity: 0, y: 50 }}   // initial entrance
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      >
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Join Our Team</h1>
-          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
+          {/* Title with continuous vertical motion */}
+          <motion.h1
+            style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+            className="mb-6 text-gray-900"
+            animate={{
+              y: [0, -10, 0, 10, 0], // floating effect
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1.2, // starts after initial entrance
+            }}
+          >
+            Join Our Team
+          </motion.h1>
+
+          {/* Description with gentle horizontal motion */}
+          <motion.p
+            style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+            className="text-gray-600 text-lg"
+            animate={{
+              x: [0, 10, 0, -10, 0], // side-to-side float
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1.2,
+            }}
+          >
             Make a meaningful impact by joining our team of dedicated professionals working to
             transform communities and create lasting change.
-          </p>
+          </motion.p>
         </div>
-      </section>
+      </motion.section>
 
       {/* Filters */}
       <section className="border-b border-gray-200 bg-white py-8">

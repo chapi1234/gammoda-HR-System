@@ -4,8 +4,11 @@ import SEO from "../components/SEO";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { siteConfig } from "../config/siteConfig";
+import { motion } from "framer-motion";
+
 
 export default function Home() {
+  
   const stats = [
     { label: "Communities Served", value: "500+", icon: Users },
     { label: "Active Projects", value: "75", icon: Target },
@@ -34,19 +37,70 @@ export default function Home() {
   return (
     <>
       <SEO />
-      
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-30 to-indigo-100 py-20 lg:py-32">
+
+      {/* <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="relative bg-gradient-to-br from-blue-500 to-indigo-600 py-20 lg:py-32 flex items-center"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      >
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">
+          <motion.div
+            className="mx-auto max-w-3xl text-center"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
+            <motion.h1
+              style={{
+                fontSize: "3rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-6 text-gray-900"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            >
               {siteConfig.tagline}
-            </h1>
-            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-gray-600 text-lg">
-              Join us in making a lasting difference in communities across the region. Together,
-              we create opportunities, build capacity, and transform lives.
-            </p>
-            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            </motion.h1>
+
+            <motion.p
+              style={{
+                fontSize: "1.5rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-8 text-gray-600 text-lg"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+            >
+              Join us in making a lasting difference in communities across the
+              region. Together, we create opportunities, build capacity, and
+              transform lives.
+            </motion.p>
+
+            <motion.div
+              className="flex flex-col gap-4 sm:flex-row sm:justify-center"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 1, ease: "easeOut" }}
+            >
               <Link to={siteConfig.links.careers}>
                 <Button size="lg" className="gap-2">
                   Explore Careers <ArrowRight className="h-4 w-4" />
@@ -57,11 +111,77 @@ export default function Home() {
                   Learn More
                 </Button>
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section> */}
+      <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="relative py-20 lg:py-32 flex items-center"
+      >
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <motion.div
+            className="mx-auto max-w-3xl text-center"
+            initial={{ opacity: 0, y: 50 }}   // Initial entrance
+            animate={{ opacity: 1, y: 0 }}    // Fade in and slide up
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          >
+            {/* Title */}
+            <motion.h1
+              style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              className="mb-6 text-gray-900"
+              animate={{
+                y: [0, -10, 0, 10, 0],   // continuous vertical motion after entrance
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1.2,             // start after initial entrance animation
+              }}
+            >
+              {siteConfig.tagline}
+            </motion.h1>
 
+            {/* Description */}
+            <motion.p
+              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              className="mb-8 text-gray-600 text-lg"
+              animate={{
+                x: [0, 10, 0, -10, 0],   // continuous side-to-side motion
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1.2,              // start after initial entrance
+              }}
+            >
+              Join us in making a lasting difference in communities across the region.
+              Together, we create opportunities, build capacity, and transform lives.
+            </motion.p>
+
+            {/* Buttons */}
+            <motion.div
+              className="flex flex-col gap-4 sm:flex-row sm:justify-center"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, ease: "easeOut", delay: 1 }}
+            >
+              <Link to={siteConfig.links.careers}>
+                <Button size="lg" className="gap-2">
+                  Explore Careers <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to={siteConfig.links.about}>
+                <Button size="lg" variant="outline">
+                  Learn More
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </motion.section>
       {/* Stats Section */}
       <section className="py-16 bg-white">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -116,29 +236,58 @@ export default function Home() {
       </section>
 
       {/* Featured Projects */}
+
+{/* Featured Projects */}
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 style={{ fontSize: "2.3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Featured Projects</h2>
-            <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600">
+            <h2
+              style={{ fontSize: "2.3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              className="mb-4 text-gray-900"
+            >
+              Featured Projects
+            </h2>
+            <p
+              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              className="text-gray-600"
+            >
               Discover our impact across communities through transformative initiatives
             </p>
           </div>
+
           <div className="grid gap-8 md:grid-cols-3">
             {featuredProjects.map((project, index) => (
-              <Card key={index} className="overflow-hidden">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="h-48 w-full object-cover"
-                />
-                <CardContent className="p-6">
-                  <h3 className="mb-2 text-gray-900">{project.title}</h3>
-                  <p className="text-gray-600">{project.description}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.2,
+                  ease: "easeOut",
+                }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 rounded-2xl">
+                  <motion.img
+                    src={project.image}
+                    alt={project.title}
+                    className="h-48 w-full object-cover"
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                  <CardContent className="p-6">
+                    <h3 className="mb-2 text-gray-900 text-xl font-semibold">
+                      {project.title}
+                    </h3>
+                    <p className="text-gray-600">{project.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
+
           <div className="mt-12 text-center">
             <Link to={siteConfig.links.portfolio}>
               <Button variant="outline" className="gap-2">
@@ -150,7 +299,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-blue-200 py-20">
+      <section style={{ background: "var(--div-gradient)" }} className="bg-blue-200 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
           <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-black">Join Our Team</h2>
           <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-black-100">
