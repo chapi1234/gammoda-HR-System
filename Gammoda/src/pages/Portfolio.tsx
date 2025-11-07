@@ -3,6 +3,7 @@ import SEO from "../components/SEO";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { motion } from "framer-motion";
 
 export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -76,14 +77,126 @@ export default function Portfolio() {
       <SEO title="Our Portfolio" description="Explore our development projects and their impact on communities." />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+      {/* <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="relative bg-gradient-to-br from-blue-500 to-indigo-600 py-20 lg:py-32 flex items-center"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      >
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Our Projects</h1>
-          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
-            Transforming communities through sustainable development initiatives across multiple sectors
-          </p>
+          <motion.div
+            className="mx-auto max-w-3xl text-center"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
+            <motion.h1
+              style={{
+                fontSize: "3rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-6 text-gray-900"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+              Our Projects
+            </motion.h1>
+
+            <motion.p
+              style={{
+                fontSize: "1.5rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-8 text-gray-600 text-lg"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+            >
+              Transforming communities through sustainable development initiatives across multiple sectors
+            </motion.p>
+          </motion.div>
         </div>
-      </section>
+      </motion.section> */}
+      <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="relative py-20 lg:py-32 flex items-center"
+        initial={{ opacity: 0, y: 50 }}   // initial entrance
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      >
+        <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <motion.div
+            className="mx-auto max-w-3xl text-center"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
+            {/* Title with vertical floating motion */}
+            <motion.h1
+              style={{
+                fontSize: "3rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-6 text-gray-900"
+              animate={{
+                y: [0, -10, 0, 10, 0], // floating effect
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1.2, // start after initial entrance
+              }}
+            >
+              Our Projects
+            </motion.h1>
+
+            {/* Description with horizontal floating motion */}
+            <motion.p
+              style={{
+                fontSize: "1.5rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-8 text-gray-600 text-lg"
+              animate={{
+                x: [0, 10, 0, -10, 0], // side-to-side float
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1.2,
+              }}
+            >
+              Transforming communities through sustainable development initiatives across multiple sectors
+            </motion.p>
+          </motion.div>
+        </div>
+      </motion.section>
 
       {/* Filters */}
       <section className="border-b border-gray-200 bg-white py-6">
@@ -105,7 +218,7 @@ export default function Portfolio() {
       {/* Projects Grid */}
       <section className="py-16 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {/* <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
               <Card key={project.id} className="overflow-hidden">
                 <img
@@ -124,6 +237,38 @@ export default function Portfolio() {
                 </CardContent>
               </Card>
             ))}
+          </div> */}
+          <div className="grid gap-8 md:grid-cols-3">
+            {filteredProjects.map((project, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.2,
+                  ease: "easeOut",
+                }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 rounded-2xl">
+                  <motion.img
+                    src={project.image}
+                    alt={project.title}
+                    className="h-48 w-full object-cover"
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                  <CardContent className="p-6">
+                    <h3 className="mb-2 text-gray-900 text-xl font-semibold">
+                      {project.title}
+                    </h3>
+                    <p className="text-gray-600">{project.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
 
           {filteredProjects.length === 0 && (
@@ -137,7 +282,7 @@ export default function Portfolio() {
       {/* Impact Summary */}
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="rounded-2xl bg-blue-600 p-12 text-center text-white">
+          <div style={{ background: "var(--div-gradient)" }} className="rounded-2xl bg-blue-600 p-12 text-center text-white">
             <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4">Creating Lasting Impact</h2>
             <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-blue-100 text-lg">
               Every project we undertake is designed with sustainability in mind, ensuring
