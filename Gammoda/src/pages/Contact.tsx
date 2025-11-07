@@ -8,26 +8,45 @@ import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent } from "../components/ui/card";
 import { siteConfig } from "../config/siteConfig";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import emailjs from "@emailjs/browser";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    from_name: "",
+    from_email: "",
     subject: "",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const result = await emailjs.send(
+        "service_lzka8js", // from EmailJS
+        "template_3y1mtta", // from EmailJS
+        {
+          from_name: formData.from_name,
+          from_email: formData.from_email,
+          subject: formData.subject,
+          message: formData.message,
+        },
+        "jh27s20mFp_qHZi4W" // from EmailJS
+      );
 
-    toast.success("Message sent successfully! We'll get back to you soon.");
-    setFormData({ name: "", email: "", subject: "", message: "" });
-    setIsSubmitting(false);
+      console.log("Email sent successfully:", result.text);
+      toast.success("Message sent successfully! We'll get back to you soon.");
+
+      setFormData({ from_name: "", from_email: "", subject: "", message: "" });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Failed to send message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -37,16 +56,71 @@ export default function Contact() {
   return (
     <>
       <SEO title="Contact Us" description={`Get in touch with ${siteConfig.companyName}.`} />
-
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+      <motion.section
+        style={{ background: "var(--hero-gradient)" }}
+        className="relative py-20 lg:py-32 flex items-center"
+        initial={{ opacity: 0, y: 50 }}   // initial entrance
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 2, ease: "easeOut" }}
+      >
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <h1 style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Contact Us</h1>
-          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="text-gray-600 text-lg">
-            Have questions or want to learn more about our work? We'd love to hear from you.
-          </p>
+          <motion.div
+            className="mx-auto max-w-3xl text-center"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
+            {/* Title with vertical floating motion */}
+            <motion.h1
+              style={{
+                fontSize: "3rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-6 text-gray-900"
+              animate={{
+                y: [0, -10, 0, 10, 0], // gentle vertical float
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2, // start after initial entrance
+              }}
+            >
+              Contact Us
+            </motion.h1>
+
+            {/* Description with horizontal floating motion */}
+            <motion.p
+              style={{
+                fontSize: "1.5rem",
+                lineHeight: "1.2",
+                fontFamily: "cursive",
+              }}
+              className="mb-8 text-gray-600 text-lg"
+              animate={{
+                x: [0, 10, 0, -10, 0], // side-to-side float
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2,
+              }}
+            >
+              Have questions or want to learn more about our work? We'd love to hear from you.
+            </motion.p>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Contact Form & Info */}
       <section className="py-20 bg-white">
@@ -122,10 +196,10 @@ export default function Contact() {
                       <Label htmlFor="name">Full Name</Label>
                       <Input
                         id="name"
-                        name="name"
+                        name="from_name"
                         type="text"
                         required
-                        value={formData.name}
+                        value={formData.from_name}
                         onChange={handleChange}
                         placeholder="John Doe"
                       />
@@ -135,10 +209,10 @@ export default function Contact() {
                       <Label htmlFor="email">Email Address</Label>
                       <Input
                         id="email"
-                        name="email"
+                        name="from_email"
                         type="email"
                         required
-                        value={formData.email}
+                        value={formData.from_email}
                         onChange={handleChange}
                         placeholder="john@example.com"
                       />
