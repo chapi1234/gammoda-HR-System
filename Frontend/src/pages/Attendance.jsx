@@ -605,7 +605,14 @@ const Attendance = () => {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="w-8 h-8">
-                            <AvatarImage src={record.avatar} alt={record.employeeName} />
+                            <AvatarImage
+                              src={
+                                record.profileImage ||
+                                record.avatar ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(record.employeeName)}&background=0D8ABC&color=fff`
+                              }
+                              alt={record.employeeName}
+                            />
                             <AvatarFallback>{record.employeeName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                           </Avatar>
                           <div>

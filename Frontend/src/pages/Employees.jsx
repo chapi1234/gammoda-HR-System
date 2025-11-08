@@ -465,7 +465,7 @@ const Employees = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={employee.avatar} alt={employee.name} />
+                      <AvatarImage src={employee.profileImage || employee.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name || '')}&background=3b82f6&color=fff`} alt={employee.name} />
                       <AvatarFallback>{(employee?.name ? employee.name.split(' ').map(n => n[0] || '').join('') : '')}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -542,7 +542,7 @@ const Employees = () => {
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={employee.avatar} alt={employee.name} />
+                        <AvatarImage src={employee.profileImage || employee.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name || '')}&background=3b82f6&color=fff`} alt={employee.name} />
                         <AvatarFallback>{(employee?.name ? employee.name.split(' ').map(n => n[0] || '').join('') : '')}</AvatarFallback>
                       </Avatar>
                       <div>

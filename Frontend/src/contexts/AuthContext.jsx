@@ -120,6 +120,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const uploadProfileImage = async (file, userId) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!file || !userId || !token) throw new Error('Missing params');
+      const form = new FormData();
+      form.append('profile', file);
+      const res = await axios.put(`${API_URL}/api/employees/upload-profile/${userId}`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (res.data && res.data.data) {
+        // update local user and storage if current user
+        const updated = res.data.data;
+        if (user && String(user.id || user._id) === String(userId)) {
+          const merged = { ...user, ...updated };
+          setUser(merged);
+          localStorage.setItem('userData', JSON.stringify(merged));
+        }
+        return updated;
+      }
+      throw new Error(res.data?.message || 'Upload failed');
+    } catch (err) {
+      console.error('Profile upload failed', err);
+      toast.error(err.response?.data?.message || err.message || 'Profile upload failed');
+      throw err;
+    }
+  };
+
   const value = {
     user,
     login,
@@ -127,6 +157,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     changePassword,
+    uploadProfileImage,
     loading,
     isAuthenticated: !!user,
     isHR: user?.role === "hr",

@@ -190,19 +190,36 @@ const Profile = () => {
     toast.success("Resume downloaded successfully!");
   };
 
-  const handleProfileImageUpload = (event) => {
+  const { uploadProfileImage, user: currentUser } = useAuth();
+
+  const handleProfileImageUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setProfileImage(e.target.result);
-          toast.success("Profile picture updated successfully!");
-        };
-        reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Show a local preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => setProfileImage(e.target.result);
+    reader.readAsDataURL(file);
+
+    // Upload to backend
+    try {
+      toast.info('Uploading profile image...');
+      const uploaded = await uploadProfileImage(file, currentUser?.id || currentUser?._id);
+      // If backend returned mapped user data with avatar, use that (persisted URL)
+      if (uploaded && uploaded.avatar) {
+        setProfileImage(uploaded.avatar);
+        toast.success('Profile picture uploaded');
       } else {
-        toast.error("Please upload an image file");
+        toast.success('Profile picture updated (preview only)');
       }
+    } catch (err) {
+      console.error('Failed to upload profile image', err);
+      toast.error('Failed to upload profile image');
     }
   };
 

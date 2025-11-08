@@ -88,6 +88,9 @@ const LeaveRequests = () => {
     id: l._id,
     employeeId: l.employee?.employeeId || '',
     employeeName: l.employee?.name || '',
+    // include avatar/profileImage so UI can render persisted images when available
+    profileImage: l.employee?.profileImage || '',
+    avatar: l.employee?.avatar || '',
     leaveType: toFrontendType(l.type),
     startDate: l.startDate,
     endDate: l.endDate,
@@ -397,6 +400,14 @@ const LeaveRequests = () => {
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-8 h-8">
+                      <AvatarImage
+                        src={
+                          request.profileImage ||
+                          request.avatar ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(request.employeeName)}&background=0D8ABC&color=fff`
+                        }
+                        alt={request.employeeName}
+                      />
                       <AvatarFallback>{request.employeeName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <div>

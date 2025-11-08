@@ -172,7 +172,7 @@ export const Sidebar = () => {
               }`}
             >
               <Avatar className="w-8 h-8 flex-shrink-0">
-                <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+                <AvatarImage src={user?.profileImage || user?.avatar || "/placeholder.svg"} alt={user?.name} />
                 <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
                   {user?.name?.split(" ").map((n) => n[0]).join("")}
                 </AvatarFallback>
@@ -224,7 +224,7 @@ export const Sidebar = () => {
               }`}
             >
               <Avatar className="w-8 h-8 flex-shrink-0">
-                <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+                <AvatarImage src={user?.profileImage || user?.avatar || "/placeholder.svg"} alt={user?.name} />
                 <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
                   {user?.name?.split(" ").map((n) => n[0]).join("")}
                 </AvatarFallback>
