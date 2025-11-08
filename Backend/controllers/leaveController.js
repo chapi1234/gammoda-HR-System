@@ -21,7 +21,8 @@ export const createLeave = async (req, res) => {
     });
     await leave.save();
     const populated = await leave.populate([
-      { path: 'employee', select: 'name employeeId' },
+      // include profileImage so frontend can show persisted avatars
+      { path: 'employee', select: 'name employeeId profileImage' },
       { path: 'manager', select: 'name' }
     ]);
     return res.status(201).json({ status: true, message: 'Leave request submitted.', data: populated });
@@ -37,12 +38,13 @@ export const listLeaves = async (req, res) => {
     let leaves;
     if (isHR) {
       leaves = await Leave.find()
-        .populate('employee', 'name employeeId')
+        // include profileImage so frontend can use the persisted image URL
+        .populate('employee', 'name employeeId profileImage')
         .populate('manager', 'name')
         .sort({ createdAt: -1 });
     } else {
       leaves = await Leave.find({ employee: req.user?._id || req.user?.id })
-        .populate('employee', 'name employeeId')
+        .populate('employee', 'name employeeId profileImage')
         .populate('manager', 'name')
         .sort({ createdAt: -1 });
     }
@@ -69,7 +71,7 @@ export const reviewLeave = async (req, res) => {
     leave.manager = req.user?._id || req.user?.id;
     await leave.save();
     const populated = await leave.populate([
-      { path: 'employee', select: 'name employeeId' },
+      { path: 'employee', select: 'name employeeId profileImage' },
       { path: 'manager', select: 'name' }
     ]);
     return res.status(200).json({ status: true, message: `Leave ${status}`, data: populated });
@@ -93,7 +95,7 @@ export const updateLeave = async (req, res) => {
     leave.days = Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1;
     await leave.save();
     const populated = await leave.populate([
-      { path: 'employee', select: 'name employeeId' },
+      { path: 'employee', select: 'name employeeId profileImage' },
       { path: 'manager', select: 'name' }
     ]);
     return res.status(200).json({ status: true, message: 'Leave updated', data: populated });

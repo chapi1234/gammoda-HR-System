@@ -33,11 +33,12 @@ export default function authorize(roles = []) {
       req.user = decoded;
       next();
     } catch (err) {
-      console.error(err);
-      res.status(500).json({
-        status: "failed",
-        message: "Internal server error: " + err.message,
-      });
+      console.error('authorize error:', err && err.message ? err.message : err);
+      // Handle common JWT errors with a 401 so client can re-authenticate
+      if (err && (err.name === 'JsonWebTokenError' || err.message === 'invalid signature' || err.name === 'TokenExpiredError')) {
+        return res.status(401).json({ status: 'failed', message: 'Invalid or expired token' });
+      }
+      res.status(500).json({ status: 'failed', message: 'Internal server error' });
     }
   };
 }
