@@ -21,6 +21,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Salary = () => {
+
   const wrapperStyle = {
     paddingBottom: "20px",
     marginTop: "20px"
@@ -115,14 +116,45 @@ const Salary = () => {
 
   const [departments, setDepartments] = useState(['all']);
 
-  const salaryTrends = [
-    { month: 'Jan', total: 180000, avg: 60000 },
-    { month: 'Feb', total: 185000, avg: 61667 },
-    { month: 'Mar', total: 192000, avg: 64000 },
-    { month: 'Apr', total: 198000, avg: 66000 },
-    { month: 'May', total: 205000, avg: 68333 },
-    { month: 'Jun', total: 210000, avg: 70000 }
-  ];
+  // Compute monthly salary trends from real payroll data (salaries array)
+  // Always return the last 6 months (including months with no data => total:0)
+  const salaryTrends = (() => {
+    const lastN = 6;
+
+    // Group existing salaries by year-month key (YYYY-MM)
+    const map = new Map();
+    if (Array.isArray(salaries)) {
+      for (const s of salaries) {
+        const pd = s.payDate ? new Date(s.payDate) : null;
+        if (!pd || isNaN(pd.getTime())) continue;
+        const year = pd.getFullYear();
+        const month = pd.getMonth(); // 0-11
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const label = pd.toLocaleString('default', { month: 'short' }) + ' ' + year;
+        const existing = map.get(key) || { total: 0, count: 0, label, date: new Date(year, month, 1) };
+        existing.total += Number(s.netSalary || 0);
+        existing.count += 1;
+        map.set(key, existing);
+      }
+    }
+
+    // Build lastN months list ending with current month.
+    const now = new Date();
+    const months = [];
+    for (let i = lastN - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear();
+      const existing = map.get(key) || { total: 0, count: 0, label, date: d };
+      months.push(existing);
+    }
+
+    return months.map(item => ({
+      month: item.label,
+      total: item.total,
+      avg: item.count ? Math.round(item.total / item.count) : 0
+    }));
+  })();
 
   const filteredSalaries = salaries.filter(salary => {
     if (!isHR) return true; // Employees see all their own records
@@ -295,9 +327,17 @@ const Salary = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const totalPayroll = salaries.reduce((sum, salary) => sum + salary.netSalary, 0);
-  const avgSalary = totalPayroll / salaries.length || 0;
-  const pendingPayments = salaries.filter(s => s.status === 'pending').length;
+  // Show totals for the current month only (not all-time)
+  const now = new Date();
+  const currentMonthSalaries = salaries.filter(s => {
+    const pd = s?.payDate ? new Date(s.payDate) : null;
+    if (!pd || isNaN(pd.getTime())) return false;
+    return pd.getFullYear() === now.getFullYear() && pd.getMonth() === now.getMonth();
+  });
+
+  const totalPayroll = currentMonthSalaries.reduce((sum, salary) => sum + Number(salary.netSalary || 0), 0);
+  const avgSalary = totalPayroll / (currentMonthSalaries.length || 1) || 0;
+  const pendingPayments = currentMonthSalaries.filter(s => s.status === 'pending').length;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -436,7 +476,7 @@ const Salary = () => {
 
       {/* Salary Trends Chart */}
       {isHR && (
-        <Card className="dashboard-card">
+        <Card style={{...marginStyle}} className="dashboard-card">
           <CardHeader>
             <CardTitle>Salary Trends</CardTitle>
             <CardDescription>Monthly payroll overview</CardDescription>
@@ -457,11 +497,11 @@ const Salary = () => {
 
       {/* Filters - Only show for HR */}
       {isHR && (
-        <Card className="dashboard-card">
+        <Card style={{...marginStyle}} className="dashboard-card">
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <div className="flex flex-wrap items-center gap-4 mb-5">
+              <div className="relative flex-1 min-w-full sm:min-w-[250px] md:min-w-[300px] lg:min-w-[240px]">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by employee name or ID..."
                   value={searchTerm}
@@ -469,19 +509,21 @@ const Salary = () => {
                   className="pl-10"
                 />
               </div>
-              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map(dept => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept === 'all' ? 'All Departments' : dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex-1 min-w-full sm:min-w-[250px] md:min-w-[220px] lg:min-w-[180px]">
+                <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map(dept => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept === 'all' ? 'All Departments' : dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
