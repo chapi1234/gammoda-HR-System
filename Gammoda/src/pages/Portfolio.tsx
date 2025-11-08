@@ -77,61 +77,6 @@ export default function Portfolio() {
       <SEO title="Our Portfolio" description="Explore our development projects and their impact on communities." />
 
       {/* Hero */}
-      {/* <motion.section
-        style={{ background: "var(--hero-gradient)" }}
-        className="relative bg-gradient-to-br from-blue-500 to-indigo-600 py-20 lg:py-32 flex items-center"
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-      >
-        <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <motion.div
-            className="mx-auto max-w-3xl text-center"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: {
-                transition: {
-                  staggerChildren: 0.2,
-                },
-              },
-            }}
-          >
-            <motion.h1
-              style={{
-                fontSize: "3rem",
-                lineHeight: "1.2",
-                fontFamily: "cursive",
-              }}
-              className="mb-6 text-gray-900"
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            >
-              Our Projects
-            </motion.h1>
-
-            <motion.p
-              style={{
-                fontSize: "1.5rem",
-                lineHeight: "1.2",
-                fontFamily: "cursive",
-              }}
-              className="mb-8 text-gray-600 text-lg"
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
-            >
-              Transforming communities through sustainable development initiatives across multiple sectors
-            </motion.p>
-          </motion.div>
-        </div>
-      </motion.section> */}
       <motion.section
         style={{ background: "var(--hero-gradient)" }}
         className="relative py-20 lg:py-32 flex items-center"
@@ -218,26 +163,6 @@ export default function Portfolio() {
       {/* Projects Grid */}
       <section className="py-16 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          {/* <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="overflow-hidden">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="h-56 w-full object-cover"
-                />
-                <CardContent className="p-6">
-                  <Badge className="mb-3">{project.category}</Badge>
-                  <h3 className="mb-2 text-gray-900">{project.title}</h3>
-                  <p className="mb-3 text-gray-600 text-sm">{project.description}</p>
-                  <div className="flex items-center justify-between text-gray-500 text-sm">
-                    <span>{project.location}</span>
-                    <span>{project.year}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div> */}
           <div className="grid gap-8 md:grid-cols-3">
             {filteredProjects.map((project, index) => (
               <motion.div
