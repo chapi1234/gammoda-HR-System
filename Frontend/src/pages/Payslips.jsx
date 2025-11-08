@@ -14,6 +14,23 @@ import { postActivity } from '../lib/postActivity';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Payslips = () => {
+  const wrapperStyle = {
+    paddingBottom: "20px",
+    marginTop: "20px"
+  };
+
+  const statCardsContainerStyle = {    
+    alignItems: "stretch",
+  };
+
+  const marginStyle = {
+    marginBottom: "10px"
+  };
+
+  const button = {
+    width: "200px"
+  };
+
   const { user } = useAuth();
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -152,14 +169,14 @@ const Payslips = () => {
             <h1 className="text-3xl font-bold text-foreground">My Payslips</h1>
             <p className="text-muted-foreground">View and download your salary statements</p>
           </div>
-          <Button className="btn-gradient">
+          <Button style={{...marginStyle, ...button}} className="btn-gradient">
             <Download className="w-4 h-4 mr-2" />
             Download Latest
           </Button>
         </div>
 
         {/* Current Month Summary */}
-        <Card className="dashboard-card">
+        <Card style={{...marginStyle}} className="dashboard-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <CreditCard className="w-5 h-5 text-primary" />
@@ -231,96 +248,97 @@ const Payslips = () => {
           </CardContent>
         </Card>
 
-        {/* Payslip History */}
-        <Card className="dashboard-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-primary" />
-              <span>Payslip History</span>
-            </CardTitle>
-            <CardDescription>View and download previous payslips</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {payslips.map((payslip) => (
-                <div key={payslip.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">{payslip.month}</h4>
-                      <p className="text-sm text-muted-foreground">{payslip.period}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="font-medium">${payslip.netSalary.toLocaleString()}</p>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="default" className="text-xs">
-                          {payslip.status}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(payslip.payDate).toLocaleDateString()}
-                        </span>
+        <div className='flex flex-wrap gap-4'>
+          <Card style={{...marginStyle}} className="dashboard-card flex-1">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-primary" />
+                <span>Payslip History</span>
+              </CardTitle>
+              <CardDescription>View and download previous payslips</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {payslips.map((payslip) => (
+                  <div key={payslip.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{payslip.month}</h4>
+                        <p className="text-sm text-muted-foreground">{payslip.period}</p>
                       </div>
                     </div>
 
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleView(payslip)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDownload(payslip)}
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      {user?.role === 'hr' && (
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeletePayslip(payslip.id)}>
-                          <FileText className="w-4 h-4" />
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="font-medium">${payslip.netSalary.toLocaleString()}</p>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="default" className="text-xs">
+                            {payslip.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(payslip.payDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleView(payslip)}
+                        >
+                          <Eye className="w-4 h-4" />
                         </Button>
-                      )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownload(payslip)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        {user?.role === 'hr' && (
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeletePayslip(payslip.id)}>
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Tax Information */}
-        <Card className="dashboard-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building2 className="w-5 h-5 text-primary" />
-              <span>Tax Information</span>
-            </CardTitle>
-            <CardDescription>Year-to-date tax summary</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">YTD Gross Income</p>
-                <p className="text-xl font-bold">${(currentPayslip.grossSalary * 8).toLocaleString()}</p>
+          {/* Tax Information */}
+          <Card className="dashboard-card flex-1">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Building2 className="w-5 h-5 text-primary" />
+                <span>Tax Information</span>
+              </CardTitle>
+              <CardDescription>Year-to-date tax summary</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">YTD Gross Income</p>
+                  <p className="text-xl font-bold">${(currentPayslip.grossSalary * 8).toLocaleString()}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">YTD Tax Paid</p>
+                  <p className="text-xl font-bold text-red-600">${(520 * 8).toLocaleString()}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Tax Savings</p>
+                  <p className="text-xl font-bold text-green-600">${(180 * 8).toLocaleString()}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">YTD Tax Paid</p>
-                <p className="text-xl font-bold text-red-600">${(520 * 8).toLocaleString()}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Tax Savings</p>
-                <p className="text-xl font-bold text-green-600">${(180 * 8).toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
