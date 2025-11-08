@@ -30,7 +30,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: ['https://gammoda.vercel.app', 'http://localhost:8080', 'http://localhost:3000'],
+  origin: ['https://gammoda.vercel.app', 'http://localhost:8080', 'http://localhost:3000', 'https://gammoda-public-portifolio.vercel.app/'],
   credentials: true
 }));
 app.use(morgan("dev"));
