@@ -122,6 +122,39 @@ const Dashboard = () => {
       }
     };
     fetchTotalEmployees();
+    // Fetch salary progression data (aggregate payroll netSalary per month for last 6 months)
+    const fetchSalaryData = async () => {
+      if (!token) return;
+      try {
+        const res = await axios.get(`${API_BASE}/api/payroll`, { headers: { Authorization: `Bearer ${token}` } });
+        const payrolls = Array.isArray(res.data?.data) ? res.data.data : [];
+        const now = new Date();
+
+        // Prepare map for last 6 months
+        const monthsMap = new Map();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          monthsMap.set(key, { date: d, total: 0, label: d.toLocaleString('default', { month: 'short' }) });
+        }
+
+        for (const p of payrolls) {
+          const pd = p.payDate ? new Date(p.payDate) : null;
+          if (!pd || isNaN(pd.getTime())) continue;
+          const key = `${pd.getFullYear()}-${String(pd.getMonth() + 1).padStart(2, '0')}`;
+          if (monthsMap.has(key)) {
+            monthsMap.get(key).total += Number(p.netSalary || 0);
+          }
+        }
+
+        const arr = Array.from(monthsMap.values()).map(m => ({ month: m.label, amount: m.total }));
+        setSalaryData(arr);
+      } catch (err) {
+        console.error('Failed to load salary progression data', err);
+        // keep existing fallback/mock data already in state
+      }
+    };
+    fetchSalaryData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -134,14 +167,17 @@ const Dashboard = () => {
     { name: 'Fri', present: 0, absent: 0 },
   ]);
 
-  const salaryData = [
-    { month: 'Jan', amount: 45000 },
-    { month: 'Feb', amount: 47000 },
-    { month: 'Mar', amount: 48000 },
-    { month: 'Apr', amount: 49000 },
-    { month: 'May', amount: 51000 },
-    { month: 'Jun', amount: 52000 },
-  ];
+  // Salary progression data (last 6 months). Will be loaded from the backend payrolls.
+  const [salaryData, setSalaryData] = useState(() => {
+    const arr = [];
+    const now = new Date();
+    // initialize last 6 months with zero amounts
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      arr.push({ month: d.toLocaleString('default', { month: 'short' }), amount: 0 });
+    }
+    return arr;
+  });
 
   const [departmentData, setDepartmentData] = useState([]);
   const [payrollThisMonth, setPayrollThisMonth] = useState(null);
