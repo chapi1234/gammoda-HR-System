@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import axios from 'axios';
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -56,10 +57,17 @@ const Profile = () => {
   }; 
 
   const { user, updateProfile } = useAuth();
+  const API_BASE = import.meta.env.VITE_API_URL;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const [deptName, setDeptName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const getDepartmentName = (dept) => {
     if (!dept) return "";
-    if (typeof dept === "string") return dept; // may be name or id
+    // if it's a string that looks like an ObjectId, don't return the raw id
+    if (typeof dept === "string") {
+      if (/^[0-9a-fA-F]{24}$/.test(dept)) return "";
+      return dept; // plain name
+    }
     if (typeof dept === "object" && dept.name) return dept.name;
     return "";
   };
@@ -192,6 +200,44 @@ const Profile = () => {
 
   const { uploadProfileImage, user: currentUser } = useAuth();
 
+  // Resolve department id -> name when `user.department` is an id
+  useEffect(() => {
+    let mounted = true;
+    const dep = user?.department;
+    if (!dep) return;
+    // If already an object with name, use it
+    if (typeof dep === 'object' && dep.name) {
+      setDeptName(dep.name);
+      return;
+    }
+    // If it's a string that's not an ObjectId, assume it's already a name
+    if (typeof dep === 'string' && !/^[0-9a-fA-F]{24}$/.test(dep)) {
+      setDeptName(dep);
+      return;
+    }
+    if (typeof dep === 'string') {
+      (async () => {
+        try {
+          const res = await axios.get(`${API_BASE}/api/departments/${dep}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!mounted) return;
+          const name = res.data?.data?.name || '';
+          setDeptName(name);
+        } catch (err) {
+          console.error('Failed to fetch department name', err);
+        }
+      })();
+    }
+    return () => { mounted = false; };
+  }, [user]);
+
+  // Keep profileData.department in sync with resolved deptName
+  useEffect(() => {
+    if (deptName) setProfileData(prev => ({ ...prev, department: deptName }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deptName]);
+
   const handleProfileImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -290,7 +336,7 @@ const Profile = () => {
               <div className="flex-1">
                 <h2 className="text-2xl font-bold">{user?.name}</h2>
                 <p className="text-muted-foreground">
-                  {user?.position} • {getDepartmentName(user?.department)}
+                  {user?.position} • {deptName || getDepartmentName(user?.department)}
                 </p>
                 <div className="flex items-center space-x-2 mt-2">
                   <Badge variant="secondary">

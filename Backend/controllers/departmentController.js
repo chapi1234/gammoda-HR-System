@@ -1,23 +1,35 @@
 import Department from "../models/Department.js";
 import Employee from "../models/Employee.js";
 
-// Helper: map Department document to frontend shape (string head)
-const mapDepartment = (dept) => ({
-  id: dept._id,
-  name: dept.name,
-  description: dept.description,
-  head: dept.head,
-  headAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(dept.head || "")}\u0026background=3b82f6\u0026color=fff`,
-  employeeCount: typeof dept.employeeCount === 'number' ? dept.employeeCount : 0,
-  averageSalary: typeof dept.averageSalary === 'number' ? dept.averageSalary : 0,
-  budget: typeof dept.budget === 'number' ? dept.budget : 0,
-  location: dept.location,
-  established: dept.established ? new Date(dept.established).toISOString().split("T")[0] : "",
-});
+// Helper: map Department document to frontend shape (head may be populated or raw id/string)
+const mapDepartment = (dept) => {
+  // Resolve head name and id whether head is populated (object) or a raw string/id
+  const headObj = dept.head;
+  const headName = headObj && typeof headObj === 'object' ? headObj.name : (headObj || '');
+  const headId = headObj && typeof headObj === 'object' ? headObj._id : null;
+  const headAvatar = (headObj && typeof headObj === 'object' && headObj.profileImage)
+    ? headObj.profileImage
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(headName || "")}\u0026background=3b82f6\u0026color=fff`;
+
+  return {
+    id: dept._id,
+    name: dept.name,
+    description: dept.description,
+    head: headName,
+    headId,
+    headAvatar,
+    employeeCount: typeof dept.employeeCount === 'number' ? dept.employeeCount : 0,
+    averageSalary: typeof dept.averageSalary === 'number' ? dept.averageSalary : 0,
+    budget: typeof dept.budget === 'number' ? dept.budget : 0,
+    location: dept.location,
+    established: dept.established ? new Date(dept.established).toISOString().split("T")[0] : "",
+  };
+};
 
 export const getAllDepartments = async (req, res) => {
   try {
-  const departments = await Department.find();
+  // Populate head so we can return head name/profileImage/headId to frontend
+  const departments = await Department.find().populate({ path: 'head', select: 'name profileImage' });
 
     // Aggregate average salary per department (exclude non-positive/undefined salaries)
     const avgs = await Employee.aggregate([
@@ -49,7 +61,7 @@ export const getAllDepartments = async (req, res) => {
 export const getDepartmentById = async (req, res) => {
   try {
     const { id } = req.params;
-  const department = await Department.findById(id);
+  const department = await Department.findById(id).populate({ path: 'head', select: 'name profileImage' });
     if (!department) {
       return res.status(404).json({
         status: false,
@@ -91,10 +103,12 @@ export const createDepartment = async (req, res) => {
       // let schema default set established as Date
     });
     await department.save();
+    // re-fetch with populated head for consistent response shape
+    const saved = await Department.findById(department._id).populate({ path: 'head', select: 'name profileImage' });
     return res.status(201).json({
       status: true,
       message: "Department created successfully",
-      data: mapDepartment(department),
+      data: mapDepartment(saved),
     });
   } catch (err) {
     res.status(500).json({
@@ -120,7 +134,9 @@ export const updateDepartment = async (req, res) => {
       ...(averageSalary !== undefined && { averageSalary: Number(averageSalary) || 0 }),
       ...(established !== undefined && { established }),
     };
-    const department = await Department.findByIdAndUpdate(id, updates, { new: true });
+  let department = await Department.findByIdAndUpdate(id, updates, { new: true });
+  // ensure head is populated for the response
+  department = await Department.findById(department._id).populate({ path: 'head', select: 'name profileImage' });
     if (!department) {
       return res.status(404).json({
         status: false,

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -40,10 +41,44 @@ export const Header = () => {
 
   const getDepartmentName = (dept) => {
     if (!dept) return '';
-    if (typeof dept === 'string') return dept;
+    // don't show raw ObjectId; treat 24-char hex as id
+    if (typeof dept === 'string') {
+      if (/^[0-9a-fA-F]{24}$/.test(dept)) return '';
+      return dept;
+    }
     if (typeof dept === 'object' && dept.name) return dept.name;
     return '';
   };
+
+  const API_BASE = import.meta.env.VITE_API_URL;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const [deptName, setDeptName] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    const dep = user?.department;
+    if (!dep) return;
+    if (typeof dep === 'object' && dep.name) {
+      setDeptName(dep.name);
+      return;
+    }
+    if (typeof dep === 'string' && !/^[0-9a-fA-F]{24}$/.test(dep)) {
+      setDeptName(dep);
+      return;
+    }
+    if (typeof dep === 'string') {
+      (async () => {
+        try {
+          const res = await axios.get(`${API_BASE}/api/departments/${dep}`, { headers: { Authorization: `Bearer ${token}` } });
+          if (!mounted) return;
+          setDeptName(res.data?.data?.name || '');
+        } catch (err) {
+          // ignore
+        }
+      })();
+    }
+    return () => { mounted = false };
+  }, [user, API_BASE, token]);
 
   const toggleTheme = () => {
     if (theme === 'light') setTheme('dark');
@@ -145,7 +180,7 @@ export const Header = () => {
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                   <Badge variant={isHR ? 'default' : 'secondary'} className="text-xs mt-1">
-                    {getDepartmentName(user?.department)}
+                    {deptName || getDepartmentName(user?.department)}
                   </Badge>
                 </div>
                 <DropdownMenuSeparator />

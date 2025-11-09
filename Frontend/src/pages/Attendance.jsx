@@ -617,7 +617,7 @@ const Attendance = () => {
                           </Avatar>
                           <div>
                             <p className="font-medium">{record.employeeName}</p>
-                            <p className="text-sm text-muted-foreground">{record.employeeId}</p>
+                            {/* <p className="text-sm text-muted-foreground">{record.employeeId}</p> */}
                           </div>
                         </div>
                       </TableCell>

@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import axios from 'axios';
 import {
@@ -35,6 +36,7 @@ const Departments = () => {
   };
 
   const { isHR } = useAuth();
+  const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
@@ -52,28 +54,72 @@ const Departments = () => {
   const API_BASE = API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
+  // Normalize/enrich a department object coming from the API so the UI can always
+  // display a head name/avatar regardless of whether the API returned an id or
+  // a populated head object.
+  const enrichDepartment = (dept) => {
+    // find employee by id in local employees cache
+    const rawHead = dept.head;
+    // headId determination: if API returned headId property use it, else if head looks like an id use that
+    const headId = dept.headId || (rawHead && typeof rawHead === 'string' && /^[0-9a-fA-F]{24}$/.test(rawHead) ? rawHead : null) || null;
+    // try to find employee name from local cache
+    const emp = headId ? employees.find(e => e.id === headId) : null;
+    const headName = emp ? emp.name : (rawHead && typeof rawHead === 'object' ? rawHead.name : (typeof rawHead === 'string' ? rawHead : ''));
+    const headAvatar = emp?.profileImage || dept.headAvatar || (headName ? `https://ui-avatars.com/api/?name=${encodeURIComponent(headName)}&background=3b82f6&color=fff` : '');
+    return {
+      id: dept.id || dept._id || (dept._id && String(dept._id)),
+      name: dept.name,
+      description: dept.description,
+      head: headName,
+      headId: headId || (dept.headId || null),
+      headAvatar,
+      employeeCount: dept.employeeCount || 0,
+      averageSalary: dept.averageSalary || 0,
+      budget: dept.budget || 0,
+      location: dept.location,
+      established: dept.established || '',
+    };
+  };
+
   const fetchDepartments = async () => {
     try {
       const res = await axios.get(`${API_BASE}/api/departments`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setDepartments(res.data?.data || []);
+      const apiDepts = res.data?.data || [];
+      setDepartments(apiDepts.map(enrichDepartment));
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to load departments');
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/employees`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // normalize to { id, name, profileImage } so Select values work consistently
+      const items = (res.data?.data || []).map(e => ({ id: e._id || e.id, name: e.name, profileImage: e.profileImage }));
+      setEmployees(items);
+      // re-enrich any already-fetched departments so head names resolve once employees are loaded
+      setDepartments(prev => prev.map(enrichDepartment));
+    } catch (err) {
+      console.error('failed to load employees', err);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
     fetchDepartments();
+    fetchEmployees();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredDepartments = departments.filter(dept =>
     dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dept.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dept.head.toLowerCase().includes(searchTerm.toLowerCase())
+    (dept.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (dept.head || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddDepartment = async () => {
@@ -84,14 +130,16 @@ const Departments = () => {
     try {
       const payload = {
         ...newDepartment,
+        // send head as employee id (empty string -> null)
+        head: newDepartment.head || null,
         budget: newDepartment.budget ? Number(newDepartment.budget) : 0,
       };
       const res = await axios.post(`${API_BASE}/api/departments`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const created = res.data?.data;
+  const created = res.data?.data;
       if (!created) throw new Error('No department returned');
-      setDepartments(prev => [...prev, created]);
+  setDepartments(prev => [...prev, enrichDepartment(created)]);
       setNewDepartment({ name: '', description: '', head: '', location: '', budget: '' });
       setShowAddDialog(false);
       toast.success('Department added successfully!');
@@ -109,14 +157,15 @@ const Departments = () => {
     try {
       const payload = {
         ...editingDepartment,
+        head: editingDepartment.head || null,
         budget: editingDepartment.budget ? Number(editingDepartment.budget) : 0,
       };
       const res = await axios.put(`${API_BASE}/api/departments/${editingDepartment.id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const updated = res.data?.data;
+  const updated = res.data?.data;
       if (!updated) throw new Error('No department returned');
-      setDepartments(prev => prev.map(d => d.id === updated.id ? updated : d));
+  setDepartments(prev => prev.map(d => d.id === updated.id ? enrichDepartment(updated) : d));
       setEditingDepartment(null);
       toast.success('Department updated successfully!');
     } catch (err) {
@@ -199,12 +248,18 @@ const Departments = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="head">Department Head</Label>
-                <Input
-                  id="head"
-                  value={newDepartment.head}
-                  onChange={(e) => setNewDepartment({ ...newDepartment, head: e.target.value })}
-                  placeholder="Name of department head"
-                />
+                <Select value={newDepartment.head} onValueChange={(value) => setNewDepartment({ ...newDepartment, head: value })}>
+                  <SelectTrigger>
+                    <SelectValue>
+                      {employees.find(e => e.id === newDepartment.head)?.name || 'Select department head'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
@@ -384,7 +439,7 @@ const Departments = () => {
                   variant="outline" 
                   size="sm" 
                   className="flex-1"
-                  onClick={() => setEditingDepartment(department)}
+                  onClick={() => setEditingDepartment({ ...department, head: department.headId || department.head })}
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
@@ -439,11 +494,18 @@ const Departments = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-head">Department Head</Label>
-                <Input
-                  id="edit-head"
-                  value={editingDepartment.head}
-                  onChange={(e) => setEditingDepartment({ ...editingDepartment, head: e.target.value })}
-                />
+                <Select value={editingDepartment.head} onValueChange={(value) => setEditingDepartment({ ...editingDepartment, head: value })}>
+                  <SelectTrigger>
+                    <SelectValue>
+                      {employees.find(e => e.id === editingDepartment.head)?.name || 'Select department head'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-location">Location</Label>

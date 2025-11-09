@@ -50,7 +50,7 @@ export default function Home() {
           >
             {/* Title */}
             <motion.h1
-              style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "sanserif" }}
               className="mb-6 text-gray-900"
               animate={{
                 y: [0, -10, 0, 10, 0],   // continuous vertical motion after entrance
@@ -67,7 +67,7 @@ export default function Home() {
 
             {/* Description */}
             <motion.p
-              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "sanserif" }}
               className="mb-8 text-gray-600 text-lg"
               animate={{
                 x: [0, 10, 0, -10, 0],   // continuous side-to-side motion
@@ -129,14 +129,14 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Who We Are</h2>
-              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-600">
+              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-6 text-gray-900">Who We Are</h2>
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-4 text-gray-600">
                 {siteConfig.companyName} is a pioneering development organization committed to
                 creating sustainable change in communities across the region. Since our founding,
                 we've been at the forefront of community empowerment, social innovation, and
                 sustainable development.
               </p>
-              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-600">
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-6 text-gray-600">
                 Our multidisciplinary team works hand-in-hand with local communities to identify
                 needs, co-create solutions, and build lasting capacity for self-reliance.
               </p>
@@ -164,13 +164,13 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2
-              style={{ fontSize: "2.3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              style={{ fontSize: "2.3rem", lineHeight: "1.2", fontFamily: "sanserif" }}
               className="mb-4 text-gray-900"
             >
               Featured Projects
             </h2>
             <p
-              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+              style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "sanserif" }}
               className="text-gray-600"
             >
               Discover our impact across communities through transformative initiatives
@@ -223,8 +223,8 @@ export default function Home() {
       {/* CTA Section */}
       <section style={{ background: "var(--div-gradient)" }} className="bg-blue-200 py-20 max-w-7xl mx-auto my-8 rounded-2xl">
         <div className="mx-auto max-w-7xl px-6 text-center lg:px-8">
-          <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-black">Join Our Team</h2>
-          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-black-100">
+          <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-4 text-black">Join Our Team</h2>
+          <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-8 text-black-100">
             We're looking for passionate individuals who want to make a real difference.
             Explore our current openings and start your journey with us.
           </p>

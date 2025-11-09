@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import axios from 'axios'
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../../contexts/AuthContext"
 import { useTheme } from "../../contexts/ThemeContext"
@@ -40,10 +41,44 @@ export const Sidebar = () => {
 
   const getDepartmentName = (dept) => {
     if (!dept) return ""
-    if (typeof dept === "string") return dept
+    // avoid displaying raw ObjectId; treat 24-char hex strings as ids
+    if (typeof dept === "string") {
+      if (/^[0-9a-fA-F]{24}$/.test(dept)) return ""
+      return dept
+    }
     if (typeof dept === "object" && dept.name) return dept.name
     return ""
   }
+
+  const API_BASE = import.meta.env.VITE_API_URL
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+  const [deptName, setDeptName] = useState('')
+
+  useEffect(() => {
+    let mounted = true
+    const dep = user?.department
+    if (!dep) return
+    if (typeof dep === 'object' && dep.name) {
+      setDeptName(dep.name)
+      return
+    }
+    if (typeof dep === 'string' && !/^[0-9a-fA-F]{24}$/.test(dep)) {
+      setDeptName(dep)
+      return
+    }
+    if (typeof dep === 'string') {
+      ;(async () => {
+        try {
+          const res = await axios.get(`${API_BASE}/api/departments/${dep}`, { headers: { Authorization: `Bearer ${token}` } })
+          if (!mounted) return
+          setDeptName(res.data?.data?.name || '')
+        } catch (err) {
+          // ignore
+        }
+      })()
+    }
+    return () => { mounted = false }
+  }, [user, API_BASE, token])
 
   const toggleTheme = () => {
     if (theme === "light") {
@@ -192,7 +227,7 @@ export const Sidebar = () => {
               <p className="text-sm font-medium">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
               <Badge variant={isHR ? "default" : "secondary"} className="text-xs mt-1">
-                {getDepartmentName(user?.department)}
+                {deptName || getDepartmentName(user?.department)}
               </Badge>
             </div>
             <DropdownMenuSeparator />
@@ -215,56 +250,6 @@ export const Sidebar = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent ${
-                isCollapsed ? "p-0" : ""
-              }`}
-            >
-              <Avatar className="w-8 h-8 flex-shrink-0">
-                <AvatarImage src={user?.profileImage || user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
-                  {user?.name?.split(" ").map((n) => n[0]).join("")}
-                </AvatarFallback>
-              </Avatar>
-              {!isCollapsed && (
-                <div className="flex-1 text-left ml-2 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.name}</p>
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    {isHR ? "HR" : "Employee"}
-                  </Badge>
-                </div>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="start" className="w-56">
-            <div className="px-2 py-1.5">
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-              <Badge variant={isHR ? "default" : "secondary"} className="text-xs mt-1">
-                {getDepartmentName(user?.department)}
-              </Badge>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/profile" className="flex items-center">
-                <User className="w-4 h-4 mr-2" /> Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings" className="flex items-center">
-                <Settings className="w-4 h-4 mr-2" /> Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-              <LogOut className="w-4 h-4 mr-2" /> Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu> */}
 
         <Button
           variant="ghost"
