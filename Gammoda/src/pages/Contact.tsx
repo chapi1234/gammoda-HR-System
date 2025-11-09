@@ -82,7 +82,7 @@ export default function Contact() {
               style={{
                 fontSize: "3rem",
                 lineHeight: "1.2",
-                fontFamily: "cursive",
+                fontFamily: "sanserif",
               }}
               className="mb-6 text-gray-900"
               animate={{
@@ -103,7 +103,7 @@ export default function Contact() {
               style={{
                 fontSize: "1.5rem",
                 lineHeight: "1.2",
-                fontFamily: "cursive",
+                fontFamily: "sanserif",
               }}
               className="mb-8 text-gray-600 text-lg"
               animate={{
@@ -128,8 +128,8 @@ export default function Contact() {
           <div className="grid gap-12 lg:grid-cols-2">
             {/* Contact Info */}
             <div>
-              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-6 text-gray-900">Get in Touch</h2>
-              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-gray-600">
+              <h2 style={{ fontSize: "2rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-6 text-gray-900">Get in Touch</h2>
+              <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-8 text-gray-600">
                 Whether you're interested in partnering with us, joining our team, or learning
                 more about our projects, we're here to help.
               </p>
@@ -177,7 +177,7 @@ export default function Contact() {
               </div>
 
               <div className="mt-8">
-                <h3 style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4 text-gray-900">Office Hours</h3>
+                <h3 style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-4 text-gray-900">Office Hours</h3>
                 <div className="space-y-2 text-gray-600">
                   <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
                   <p>Saturday: 9:00 AM - 1:00 PM</p>

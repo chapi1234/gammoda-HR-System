@@ -103,7 +103,7 @@ export default function Portfolio() {
               style={{
                 fontSize: "3rem",
                 lineHeight: "1.2",
-                fontFamily: "cursive",
+                fontFamily: "sanserif",
               }}
               className="mb-6 text-gray-900"
               animate={{
@@ -124,7 +124,7 @@ export default function Portfolio() {
               style={{
                 fontSize: "1.5rem",
                 lineHeight: "1.2",
-                fontFamily: "cursive",
+                fontFamily: "sanserif",
               }}
               className="mb-8 text-gray-600 text-lg"
               animate={{
@@ -208,7 +208,7 @@ export default function Portfolio() {
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div style={{ background: "var(--div-gradient)" }} className="rounded-2xl bg-blue-600 p-12 text-center text-white">
-            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-4">Creating Lasting Impact</h2>
+            <h2 style={{ fontSize: "2.5rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mb-4">Creating Lasting Impact</h2>
             <p style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mb-8 text-blue-100 text-lg">
               Every project we undertake is designed with sustainability in mind, ensuring
               communities can maintain and build upon the progress we make together.

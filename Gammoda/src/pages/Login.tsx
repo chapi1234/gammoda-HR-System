@@ -53,8 +53,8 @@ export default function Login() {
             <Link to="/" className="inline-block">
               <Logo className="justify-center" />
             </Link>
-            <h1 style={{ fontSize: "1.4rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mt-6 text-gray-900">Sign in to your account</h1>
-            <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"cursive" }} className="mt-2 text-gray-600">
+            <h1 style={{ fontSize: "1.4rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mt-6 text-gray-900">Sign in to your account</h1>
+            <p style={{ fontSize: "1rem", lineHeight: "1.2", fontFamily:"sanserif" }} className="mt-2 text-gray-600">
               Or{" "}
               <Link to={siteConfig.links.register} className="text-blue-600 hover:underline">
                 create a new account

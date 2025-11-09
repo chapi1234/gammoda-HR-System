@@ -136,7 +136,7 @@ export default function Careers() {
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
           {/* Title with continuous vertical motion */}
           <motion.h1
-            style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "cursive" }}
+            style={{ fontSize: "3rem", lineHeight: "1.2", fontFamily: "sanserif" }}
             className="mb-6 text-gray-900"
             animate={{
               y: [0, -10, 0, 10, 0], // floating effect
@@ -153,7 +153,7 @@ export default function Careers() {
 
           {/* Description with gentle horizontal motion */}
           <motion.p
-            style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "cursive" }}
+            style={{ fontSize: "1.5rem", lineHeight: "1.2", fontFamily: "sanserif" }}
             className="text-gray-600 text-lg"
             animate={{
               x: [0, 10, 0, -10, 0], // side-to-side float
