@@ -529,8 +529,8 @@ const Dashboard = () => {
             <StatCard
               style={statCardStyle}
               title="Total Employees"
-              value={totalEmployees !== null ? String(totalEmployees) : '247'}
-              change="+12"
+              value={totalEmployees !== null ? String(totalEmployees) : '0'}
+              change="+0"
               icon={Users}
               trend="up"
             />
@@ -540,7 +540,7 @@ const Dashboard = () => {
               style={statCardStyle}
               title="Present Today"
               value={String(attendanceStats.present)}
-              change="+5"
+              change="+0"
               icon={UserCheck}
               trend="up"
             />
@@ -559,8 +559,8 @@ const Dashboard = () => {
             <StatCard
               style={statCardStyle}
               title="Payroll This Month"
-              value={payrollThisMonth !== null ? `$${Number(payrollThisMonth).toLocaleString()}` : '$1.2M'}
-              change="+8%"
+              value={payrollThisMonth !== null ? `$${Number(payrollThisMonth).toLocaleString()}` : '$0'}
+              change="+0%"
               icon={DollarSign}
               trend="up"
             />
