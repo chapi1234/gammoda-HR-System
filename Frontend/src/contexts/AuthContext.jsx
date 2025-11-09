@@ -23,7 +23,18 @@ export const AuthProvider = ({ children }) => {
     const userData = localStorage.getItem("userData");
 
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      try {
+        const parsed = JSON.parse(userData);
+        // normalize avatar/profileImage fields for consistent UI usage
+        const normalized = {
+          ...parsed,
+          id: parsed.id || parsed._id || parsed._doc?._id,
+          avatar: parsed.avatar || parsed.profileImage || (parsed.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(parsed.name)}&background=3b82f6&color=fff` : undefined),
+        };
+        setUser(normalized);
+      } catch (e) {
+        setUser(JSON.parse(userData));
+      }
     }
     setLoading(false);
   }, []);
@@ -42,8 +53,15 @@ export const AuthProvider = ({ children }) => {
       if (!data.status) throw new Error(data.message);
 
       localStorage.setItem("authToken", data.data.token);
-      localStorage.setItem("userData", JSON.stringify(data.data.user));
-      setUser(data.data.user);
+      // normalize user before storing so frontend always has `avatar` and `id`
+      const su = data.data.user || {};
+      const normalized = {
+        ...su,
+        id: su.id || su._id,
+        avatar: su.avatar || su.profileImage || (su.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(su.name)}&background=3b82f6&color=fff` : undefined),
+      };
+      localStorage.setItem("userData", JSON.stringify(normalized));
+      setUser(normalized);
 
       toast.success(`Welcome back, ${data.data.user.name}!`);
       return data.data.user;
@@ -65,8 +83,14 @@ export const AuthProvider = ({ children }) => {
       if (!data.status) throw new Error(data.message);
 
       localStorage.setItem("authToken", data.data.token);
-      localStorage.setItem("userData", JSON.stringify(data.data.user));
-      setUser(data.data.user);
+      const su = data.data.user || {};
+      const normalized = {
+        ...su,
+        id: su.id || su._id,
+        avatar: su.avatar || su.profileImage || (su.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(su.name)}&background=3b82f6&color=fff` : undefined),
+      };
+      localStorage.setItem("userData", JSON.stringify(normalized));
+      setUser(normalized);
 
       toast.success("Account created successfully!");
       return data.data.user;
