@@ -569,7 +569,7 @@ const Dashboard = () => {
             <StatCard
               style={statCardStyle}
               title="Pending Requests"
-              value={pendingRequestsCount !== null ? String(pendingRequestsCount) : '15'}
+              value={pendingRequestsCount !== null ? String(pendingRequestsCount) : '0'}
               change="-3"
               icon={Calendar}
               trend="down"

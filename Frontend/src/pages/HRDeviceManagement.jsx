@@ -25,140 +25,16 @@ import {
 import { Textarea } from '../components/ui/textarea';
 import {
   Laptop, Tablet, Smartphone, Monitor, Plus, Search,
-  Edit, Trash2, UserPlus, Calendar, MapPin, AlertCircle
+  Edit, Trash2, UserPlus, Calendar, MapPin, AlertCircle, RotateCw
 } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const HRDeviceManagement = () => {
-  // Dummy employees data
-  const employees = [
-    { id: 1, name: 'John Smith', email: 'john.smith@company.com', department: 'Engineering' },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah.johnson@company.com', department: 'Marketing' },
-    { id: 3, name: 'Mike Chen', email: 'mike.chen@company.com', department: 'Sales' },
-    { id: 4, name: 'Emily Davis', email: 'emily.davis@company.com', department: 'HR' },
-    { id: 5, name: 'David Wilson', email: 'david.wilson@company.com', department: 'Engineering' },
-  ];
-
-  // Dummy device assignments data
-  const deviceAssignments = [
-    {
-      id: 1,
-      deviceName: 'MacBook Pro 16"',
-      deviceType: 'laptop',
-      model: 'MacBook Pro M2',
-      serialNumber: 'MBP2023001',
-      ram: '32GB',
-      storage: '1TB SSD',
-      employeeId: 1,
-      employeeName: 'John Smith',
-      assignedDate: '2023-01-15',
-      status: 'active',
-      location: 'Office Desk 15A',
-      condition: 'excellent'
-    },
-    {
-      id: 2,
-      deviceName: 'Dell Monitor',
-      deviceType: 'monitor',
-      model: 'Dell U2720Q 27"',
-      serialNumber: 'DL27001234',
-      ram: 'N/A',
-      storage: 'N/A',
-      employeeId: 1,
-      employeeName: 'John Smith',
-      assignedDate: '2023-01-15',
-      status: 'active',
-      location: 'Office Desk 15A',
-      condition: 'good'
-    },
-    {
-      id: 3,
-      deviceName: 'iPad Pro',
-      deviceType: 'tablet',
-      model: 'iPad Pro 12.9"',
-      serialNumber: 'IPD2023002',
-      ram: '8GB',
-      storage: '256GB',
-      employeeId: 2,
-      employeeName: 'Sarah Johnson',
-      assignedDate: '2023-02-10',
-      status: 'active',
-      location: 'Marketing Dept',
-      condition: 'excellent'
-    },
-    {
-      id: 4,
-      deviceName: 'iPhone 14',
-      deviceType: 'phone',
-      model: 'iPhone 14 128GB',
-      serialNumber: 'IP14001',
-      ram: '6GB',
-      storage: '128GB',
-      employeeId: 2,
-      employeeName: 'Sarah Johnson',
-      assignedDate: '2023-02-10',
-      status: 'active',
-      location: 'Mobile Use',
-      condition: 'good'
-    },
-    {
-      id: 5,
-      deviceName: 'ThinkPad X1',
-      deviceType: 'laptop',
-      model: 'ThinkPad X1 Carbon',
-      serialNumber: 'TP2023003',
-      ram: '16GB',
-      storage: '512GB SSD',
-      employeeId: 3,
-      employeeName: 'Mike Chen',
-      assignedDate: '2023-03-05',
-      status: 'maintenance',
-      location: 'IT Department',
-      condition: 'fair'
-    },
-  ];
-
-  // Available devices (unassigned)
-  const availableDevices = [
-    {
-      id: 101,
-      name: 'MacBook Air M2',
-      type: 'laptop',
-      model: 'MacBook Air 13"',
-      serialNumber: 'MBA2023010',
-      ram: '16GB',
-      storage: '512GB SSD',
-      status: 'available',
-      condition: 'excellent',
-      purchaseDate: '2023-06-01'
-    },
-    {
-      id: 102,
-      name: 'iPad Air',
-      type: 'tablet',
-      model: 'iPad Air 5th Gen',
-      serialNumber: 'IPA2023015',
-      ram: '8GB',
-      storage: '256GB',
-      status: 'available',
-      condition: 'excellent',
-      purchaseDate: '2023-05-15'
-    },
-    {
-      id: 103,
-      name: 'Dell Monitor',
-      type: 'monitor',
-      model: 'Dell S2722DC',
-      serialNumber: 'DL27002',
-      ram: 'N/A',
-      storage: 'N/A',
-      status: 'available',
-      condition: 'good',
-      purchaseDate: '2023-04-20'
-    },
-  ];
+  // NOTE: Removed hard-coded mock employees and devices. The component now
+  // relies on the API calls in useEffect to populate `devices` and
+  // `employeesList`. This prevents showing dummy/mock users when assigning devices.
 
   // State management
   const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -167,8 +43,9 @@ const HRDeviceManagement = () => {
   const [isEditDeviceOpen, setIsEditDeviceOpen] = useState(false);
   const [isCreateDeviceOpen, setIsCreateDeviceOpen] = useState(false);
   const [editingDevice, setEditingDevice] = useState(null);
-  const [devices, setDevices] = useState(deviceAssignments);
-  const [employeesList, setEmployeesList] = useState(employees);
+  // start with empty arrays; useEffect will populate these from the API
+  const [devices, setDevices] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
   const [loadingDevices, setLoadingDevices] = useState(false);
 
   // assign form state
@@ -257,6 +134,13 @@ const HRDeviceManagement = () => {
     setIsEditDeviceOpen(true);
   };
 
+  const handleOpenReassign = (device) => {
+    const deviceId = device._id || device.id || device.id;
+    // open assign dialog and prefill the device id so HR can pick a new employee
+    setAssignForm(prev => ({ ...prev, deviceId: String(deviceId), employeeId: '' }));
+    setIsAddDeviceOpen(true);
+  };
+
 
   const handleUpdateDevice = (updatedDevice) => {
     // call backend to update
@@ -292,7 +176,8 @@ const HRDeviceManagement = () => {
       })
       .finally(() => setLoadingDevices(false));
 
-    axios.get(`${API_BASE}/api/employees`) // public endpoint
+    // include auth headers like other pages (backend expects authenticated request)
+    axios.get(`${API_BASE}/api/employees`, { headers })
       .then(res => {
         const payload = res.data?.data || res.data;
         if (Array.isArray(payload)) setEmployeesList(payload);
@@ -698,6 +583,16 @@ const HRDeviceManagement = () => {
                           {device.status}
                         </Badge>
                         <div className="flex items-center space-x-2">
+                          {device.status !== 'available' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReturnDevice(device.id)}
+                              title="Mark returned"
+                            >
+                              <RotateCw className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm"
@@ -755,9 +650,17 @@ const HRDeviceManagement = () => {
                                 <p className="font-medium">{device.deviceName}</p>
                                 <p className="text-sm text-muted-foreground">{device.serialNumber}</p>
                               </div>
-                              <Badge variant={getStatusColor(device.status)} className="text-xs">
-                                {device.status}
-                              </Badge>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={getStatusColor(device.status)} className="text-xs">
+                                  {device.status}
+                                </Badge>
+                                <Button size="sm" variant="outline" onClick={() => handleReturnDevice(device.id)} title="Mark returned"> 
+                                  <RotateCw className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => handleOpenReassign(device)} title="Reassign">
+                                  <UserPlus className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           );
                         })}

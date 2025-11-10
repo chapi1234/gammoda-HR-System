@@ -255,108 +255,110 @@ const EmployeeDevices = () => {
         </CardContent>
       </Card>
 
-      {/* Device History */}
-      <Card style={marginStyle} className="dashboard-card">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-primary" />
-            <span>Device Assignment History</span>
-          </CardTitle>
-          <CardDescription>
-            Timeline of your device assignments and returns
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {(() => {
-              // build timeline events from myDevices
-              if (loading) {
-                return (
-                  <div className="text-sm text-muted-foreground">Loading history...</div>
-                );
-              }
-
-              const userId = user?._id || user?.id || user?.employeeId || user?.email;
-              const events = [];
-
-              myDevices.forEach(device => {
-                const devName = device.name || device.raw?.name || 'Device';
-                // prefer server-side history array if present
-                const hist = (device.raw && Array.isArray(device.raw.history)) ? device.raw.history : [];
-                if (hist.length) {
-                  hist.forEach(h => {
-                    // h may have employee as id or populated object
-                    const hEmployeeId = (typeof h.employee === 'string') ? h.employee : (h.employee && (h.employee._id || h.employee.id || h.employee.email));
-                    // match by id or email
-                    const matched = userId && hEmployeeId && (String(hEmployeeId) === String(userId) || String(hEmployeeId) === String(user?.email) || String(userId) === String(user?.email));
-                    if (matched) {
-                      events.push({
-                        device: devName,
-                        action: h.action || h.type || 'updated',
-                        date: h.date || h.at || h.createdAt || h.timestamp || null,
-                        notes: h.notes || h.locationNotes || '',
-                        location: h.location || ''
-                      });
-                    }
-                  });
-                } else {
-                  // fallback: include assignedDate for this device if assigned to current user
-                  const assignedTo = device.raw && (device.raw.assignedTo || device.raw.employeeId || device.raw.employee) ;
-                  const assignedId = (typeof assignedTo === 'string') ? assignedTo : (assignedTo && (assignedTo._id || assignedTo.id || assignedTo.email));
-                  const isAssignedToUser = userId && assignedId && (String(assignedId) === String(userId) || String(assignedId) === String(user?.email));
-                  if (isAssignedToUser && device.assignedDate) {
-                    events.push({ device: devName, action: 'assigned', date: device.assignedDate, notes: '', location: device.location });
-                  }
+      <div className="flex flex-wrap gap-4 mb-5">
+        {/* Device History */}
+        <Card style={marginStyle} className="dashboard-card flex-1">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Clock className="w-5 h-5 text-primary" />
+              <span>Device Assignment History</span>
+            </CardTitle>
+            <CardDescription>
+              Timeline of your device assignments and returns
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {(() => {
+                // build timeline events from myDevices
+                if (loading) {
+                  return (
+                    <div className="text-sm text-muted-foreground">Loading history...</div>
+                  );
                 }
-              });
 
-              if (!events.length) {
-                return (<div className="text-sm text-muted-foreground">No device history available.</div>);
-              }
+                const userId = user?._id || user?.id || user?.employeeId || user?.email;
+                const events = [];
 
-              // sort by date descending
-              events.sort((a,b) => {
-                const da = a.date ? new Date(a.date).getTime() : 0;
-                const db = b.date ? new Date(b.date).getTime() : 0;
-                return db - da;
-              });
+                myDevices.forEach(device => {
+                  const devName = device.name || device.raw?.name || 'Device';
+                  // prefer server-side history array if present
+                  const hist = (device.raw && Array.isArray(device.raw.history)) ? device.raw.history : [];
+                  if (hist.length) {
+                    hist.forEach(h => {
+                      // h may have employee as id or populated object
+                      const hEmployeeId = (typeof h.employee === 'string') ? h.employee : (h.employee && (h.employee._id || h.employee.id || h.employee.email));
+                      // match by id or email
+                      const matched = userId && hEmployeeId && (String(hEmployeeId) === String(userId) || String(hEmployeeId) === String(user?.email) || String(userId) === String(user?.email));
+                      if (matched) {
+                        events.push({
+                          device: devName,
+                          action: h.action || h.type || 'updated',
+                          date: h.date || h.at || h.createdAt || h.timestamp || null,
+                          notes: h.notes || h.locationNotes || '',
+                          location: h.location || ''
+                        });
+                      }
+                    });
+                  } else {
+                    // fallback: include assignedDate for this device if assigned to current user
+                    const assignedTo = device.raw && (device.raw.assignedTo || device.raw.employeeId || device.raw.employee) ;
+                    const assignedId = (typeof assignedTo === 'string') ? assignedTo : (assignedTo && (assignedTo._id || assignedTo.id || assignedTo.email));
+                    const isAssignedToUser = userId && assignedId && (String(assignedId) === String(userId) || String(assignedId) === String(user?.email));
+                    if (isAssignedToUser && device.assignedDate) {
+                      events.push({ device: devName, action: 'assigned', date: device.assignedDate, notes: '', location: device.location });
+                    }
+                  }
+                });
 
-              return events.map((ev, idx) => (
-                <div key={`${ev.device}-${idx}`} className={`flex items-center space-x-4 p-3 rounded-lg ${idx === 0 ? 'bg-accent/50' : ''}`}>
-                  <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-primary' : 'bg-muted-foreground'}`}></div>
-                  <div className="flex-1">
-                    <p className="font-medium">{ev.device} &mdash; {ev.action}</p>
-                    <p className="text-sm text-muted-foreground">{ev.date ? new Date(ev.date).toLocaleDateString() : 'Unknown date'}{ev.location ? ` — ${ev.location}` : ''}{ev.notes ? ` • ${ev.notes}` : ''}</p>
+                if (!events.length) {
+                  return (<div className="text-sm text-muted-foreground">No device history available.</div>);
+                }
+
+                // sort by date descending
+                events.sort((a,b) => {
+                  const da = a.date ? new Date(a.date).getTime() : 0;
+                  const db = b.date ? new Date(b.date).getTime() : 0;
+                  return db - da;
+                });
+
+                return events.map((ev, idx) => (
+                  <div key={`${ev.device}-${idx}`} className={`flex items-center space-x-4 p-3 rounded-lg ${idx === 0 ? 'bg-accent/50' : ''}`}>
+                    <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-primary' : 'bg-muted-foreground'}`}></div>
+                    <div className="flex-1">
+                      <p className="font-medium">{ev.device} &mdash; {ev.action}</p>
+                      <p className="text-sm text-muted-foreground">{ev.date ? new Date(ev.date).toLocaleDateString() : 'Unknown date'}{ev.location ? ` — ${ev.location}` : ''}{ev.notes ? ` • ${ev.notes}` : ''}</p>
+                    </div>
                   </div>
-                </div>
-              ));
-            })()}
-          </div>
-        </CardContent>
-      </Card>
+                ));
+              })()}
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Contact Information */}
-      <Card className="dashboard-card">
-        <CardHeader>
-          <CardTitle>Need Help?</CardTitle>
-          <CardDescription>
-            Contact IT support for device-related queries
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <p className="text-sm">
-              <strong>IT Support:</strong> support@company.com
-            </p>
-            <p className="text-sm">
-              <strong>Phone:</strong> +1 (555) 123-4567
-            </p>
-            <p className="text-sm">
-              <strong>Office Hours:</strong> Monday - Friday, 9:00 AM - 6:00 PM
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Contact Information */}
+        <Card className="dashboard-card flex-1">
+          <CardHeader>
+            <CardTitle>Need Help?</CardTitle>
+            <CardDescription>
+              Contact IT support for device-related queries
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm">
+                <strong>IT Support:</strong> getachewhabtamu29@gmail.com
+              </p>
+              <p className="text-sm">
+                <strong>Phone:</strong> +2519-2469-9554
+              </p>
+              <p className="text-sm">
+                <strong>Office Hours:</strong> Monday - Friday, 9:00 AM - 6:00 PM
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
