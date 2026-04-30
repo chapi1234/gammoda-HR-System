@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "node scripts/seedDemoData.js",
     "start": "nodemon index.js",
     "dev": "nodemon index.js"
   },
