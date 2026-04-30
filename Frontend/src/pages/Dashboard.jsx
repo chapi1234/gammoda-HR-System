@@ -629,17 +629,23 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap gap-2 mt-4">
-                {departmentData.map((dept) => (
-                  <div key={dept.name} className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: dept.color }}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {dept.name} ({dept.value}%)
-                    </span>
-                  </div>
-                ))}
+                {(() => {
+                  const total = departmentData.reduce((sum, d) => sum + (d.value || 0), 0);
+                  return departmentData.map((dept) => {
+                    const pct = total > 0 ? Math.round((dept.value / total) * 100) : 0;
+                    return (
+                      <div key={dept.name} className="flex items-center space-x-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: dept.color }}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {dept.name} ({pct}%)
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </CardContent>
           </Card>

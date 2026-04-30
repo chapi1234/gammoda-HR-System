@@ -109,11 +109,29 @@ export const AuthProvider = ({ children }) => {
     toast.success("Logged out successfully");
   };
 
-  const updateProfile = (updatedData) => {
-    const updatedUser = { ...user, ...updatedData };
-    setUser(updatedUser);
-    localStorage.setItem("userData", JSON.stringify(updatedUser));
-    toast.success("Profile updated successfully");
+  const updateProfile = async (updatedData) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const userId = user?.id || user?._id;
+      if (!userId || !token) throw new Error("Not authenticated");
+
+      const response = await axios.put(
+        `${API_URL}/api/employees/update/${userId}`,
+        updatedData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!response.data?.status) throw new Error(response.data?.message || "Update failed");
+
+      // Merge the saved data back into local user state
+      const updatedUser = { ...user, ...updatedData };
+      setUser(updatedUser);
+      localStorage.setItem("userData", JSON.stringify(updatedUser));
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Failed to update profile");
+      throw error;
+    }
   };
 
   const changePassword = async (oldPassword, newPassword, confirmPassword) => {
