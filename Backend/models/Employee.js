@@ -42,6 +42,8 @@ const EmployeeSchema = new mongoose.Schema(
       enum: ["hourly", "salary"],
       default: "salary",
     },
+    gradeLevel: { type: String },
+    nationalId: { type: String },
     emergencyContact: { type: String },
     emergencyPhone: { type: String },
     resume: { 

@@ -35,6 +35,14 @@ export const getAllEmployees = async (req, res) => {
       avatar: emp.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff`,
       address: emp.address,
       employeeId: emp.employeeId || '',
+      role: emp.role || 'employee',
+      gender: emp.gender || '',
+      dateOfBirth: emp.dateOfBirth ? emp.dateOfBirth.toISOString().split('T')[0] : '',
+      emergencyContact: emp.emergencyContact || '',
+      emergencyPhone: emp.emergencyPhone || '',
+      nationalId: emp.nationalId || '',
+      gradeLevel: emp.gradeLevel || '',
+      education: emp.education || [],
     }));
     res.status(200).json({
       status: true,
@@ -74,6 +82,7 @@ export const getEmployeeById = async (req, res) => {
       avatar: emp.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff`,
       address: emp.address,
       employeeId: emp.employeeId || '',
+      role: emp.role || 'employee',
     };
     res.status(200).json({
       status: true,
@@ -103,6 +112,9 @@ export const createEmployee = async (req, res) => {
     status,
     employeeId,
     avatar,
+    role,
+    educationLevel,
+    gradeLevel,
   } = req.body;
 
   try {
@@ -141,6 +153,9 @@ export const createEmployee = async (req, res) => {
       employeeId,
       profileImage: avatar,
       startDate: joinDate,
+      role: role || "employee",
+      gradeLevel,
+      ...(educationLevel ? { education: [{ degree: educationLevel }] } : {}),
     });
 
     await user.save();
@@ -182,6 +197,7 @@ export const createEmployee = async (req, res) => {
       avatar: user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff`,
       address: user.address,
       employeeId: user.employeeId || '',
+      role: user.role || 'employee',
     };
     res.status(201).json({ status: true, message: "Employee created successfully", data: mapped });
   } catch (error) {
@@ -201,6 +217,7 @@ export const updateEmployee = async (req, res) => {
     skills,
     emergencyContact,
     emergencyPhone,
+    nationalId,
   } = req.body;
   try {
     const employee = await Employee.findByIdAndUpdate(
@@ -215,6 +232,7 @@ export const updateEmployee = async (req, res) => {
         skills,
         emergencyContact,
         emergencyPhone,
+        nationalId,
       },
       { new: true }
     );
@@ -228,7 +246,7 @@ export const updateEmployee = async (req, res) => {
 };
 
 export const editEmployee = async (req, res) => {
-  const { name, email, phone, department, departmentId, salary, position, address, status, employeeId, avatar, joinDate } = req.body;
+  const { name, email, phone, department, departmentId, salary, position, address, status, employeeId, avatar, joinDate, role, educationLevel, gradeLevel } = req.body;
   const { id } = req.params;
   try {
     const prev = await Employee.findById(id).populate('department');
@@ -261,6 +279,9 @@ export const editEmployee = async (req, res) => {
         employeeId,
         profileImage: avatar,
         startDate: joinDate,
+        gradeLevel,
+        ...(educationLevel !== undefined ? { education: [{ degree: educationLevel }] } : {}),
+        ...(role ? { role } : {}),
       },
       { new: true }
     ).populate('department');
@@ -297,6 +318,7 @@ export const editEmployee = async (req, res) => {
       avatar: emp.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff`,
       address: emp.address,
       employeeId: emp.employeeId || '',
+      role: emp.role || 'employee',
     };
     res.status(200).json({ status: true, message: "Employee updated successfully", data: mapped });
   } catch (error) {
@@ -351,6 +373,7 @@ export const deleteEmployee = async (req, res) => {
       avatar: emp.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff`,
       address: emp.address,
       employeeId: emp.employeeId || '',
+      role: emp.role || 'employee',
     };
     res.status(200).json({ status: true, message: "Employee deleted successfully", data: mapped });
   } catch (error) {
@@ -435,6 +458,7 @@ export const profileUpload = async (req, res) => {
       avatar: saved.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(saved.name)}&background=3b82f6&color=fff`,
       address: saved.address,
       employeeId: saved.employeeId || '',
+      role: saved.role || 'employee',
     };
 
     res.status(200).json({ status: true, message: "Profile image uploaded", data: mapped });

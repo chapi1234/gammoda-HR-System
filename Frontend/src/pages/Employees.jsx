@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+// xlsx not needed - using built-in CSV export
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -14,7 +15,7 @@ import {
 } from '../components/ui/table';
 import {
   Search, Plus, Filter, Edit, Trash2, Mail, Phone, MapPin,
-  Building2, Calendar, DollarSign, MoreHorizontal, UserPlus, Users
+  Building2, Calendar, DollarSign, MoreHorizontal, UserPlus, Users, Download
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 const API_URL = import.meta.env.VITE_API_URL;
@@ -89,6 +90,9 @@ const Employees = () => {
     position: '',
     salary: '',
     address: '',
+    role: 'employee',
+    educationLevel: '',
+    gradeLevel: '',
     joinDate: new Date().toISOString().split('T')[0]
   });
 
@@ -120,6 +124,9 @@ const Employees = () => {
         position: newEmployee.position,
         salary: newEmployee.salary ? Number(newEmployee.salary) : undefined,
         address: newEmployee.address,
+        role: newEmployee.role,
+        educationLevel: newEmployee.educationLevel,
+        gradeLevel: newEmployee.gradeLevel,
         joinDate: newEmployee.joinDate,
         status: 'active',
       };
@@ -131,7 +138,8 @@ const Employees = () => {
       setEmployees(prev => [...prev, created]);
       setNewEmployee({
         name: '', email: '', password: '', phone: '', departmentId: '', position: '',
-        salary: '', address: '', joinDate: new Date().toISOString().split('T')[0]
+        salary: '', address: '', role: 'employee', educationLevel: '', gradeLevel: '',
+        joinDate: new Date().toISOString().split('T')[0]
       });
       setShowAddDialog(false);
       toast.success('Employee added successfully!');
@@ -145,7 +153,9 @@ const Employees = () => {
     setEditingEmployee({
       ...employee,
       departmentId: employee.departmentId || '',
-      // Guard against undefined/null salary to avoid runtime errors when opening the dialog
+      role: employee.role || 'employee',
+      educationLevel: employee.education?.[0]?.degree || '',
+      gradeLevel: employee.gradeLevel || '',
       salary: employee?.salary != null ? String(employee.salary) : ''
     });
   };
@@ -162,6 +172,9 @@ const Employees = () => {
         phone: editingEmployee.phone,
         departmentId: editingEmployee.departmentId,
         position: editingEmployee.position,
+        role: editingEmployee.role,
+        educationLevel: editingEmployee.educationLevel,
+        gradeLevel: editingEmployee.gradeLevel,
         salary: editingEmployee.salary ? Number(editingEmployee.salary) : undefined,
       };
       const res = await axios.put(`${API_BASE}/api/employees/edit/${editingEmployee.id}`, payload, {
@@ -189,6 +202,97 @@ const Employees = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to remove employee');
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (employees.length === 0) {
+      toast.warn('No employees to export');
+      return;
+    }
+
+    // Column headers matching the docx template
+    const headers = [
+      'No',
+      'Name',
+      'Gender',
+      'Date of Birth',
+      'Education Level',
+      'Job Title',
+      'Department',
+      'Date of Joining',
+      'Salary',
+      'Grade / Level',
+      'Service Year',
+      'Retirement Year',
+      'National ID',
+      'Phone Number',
+      'Emergency Contact',
+      'Emergency Contact Phone'
+    ];
+
+    // Helper: wrap a cell value in quotes and escape internal quotes
+    const escapeCell = (val) => {
+      const str = val === null || val === undefined ? '' : String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const rows = employees.map((emp, index) => {
+      const joinYear = emp.joinDate ? new Date(emp.joinDate).getFullYear() : '';
+      const serviceYear = joinYear ? (new Date().getFullYear() - joinYear) : '';
+      const birthYear = emp.dateOfBirth ? new Date(emp.dateOfBirth).getFullYear() : '';
+      const retirementYear = birthYear ? birthYear + 60 : '';
+
+      const educationStr =
+        Array.isArray(emp.education) && emp.education.length > 0
+          ? `${emp.education[0].degree || ''} ${emp.education[0].fieldOfStudy || ''}`.trim()
+          : '';
+
+      return [
+        index + 1,
+        emp.name || '',
+        emp.gender === 'M' ? 'Male' : emp.gender === 'F' ? 'Female' : emp.gender || '',
+        emp.dateOfBirth || '',
+        educationStr,
+        emp.position || '',
+        emp.department || '',
+        emp.joinDate || '',
+        emp.salary || '',
+        emp.gradeLevel || '',
+        serviceYear,
+        retirementYear,
+        emp.nationalId || '',
+        emp.phone || '',
+        emp.emergencyContact || '',
+        emp.emergencyPhone || '',
+      ].map(escapeCell).join(',');
+    });
+
+    const csvContent = [
+      headers.map(escapeCell).join(','),
+      ...rows,
+    ].join('\r\n');
+
+    // BOM ensures Excel opens the file in UTF-8 correctly
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Gamo_Development_Association_Employee_profile.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Count how many employees have missing key fields
+    const incomplete = employees.filter(emp =>
+      !emp.gradeLevel || !emp.nationalId || !emp.emergencyContact || !emp.emergencyPhone ||
+      !emp.dateOfBirth || !(emp.education?.length > 0)
+    ).length;
+
+    toast.success(`Exported ${employees.length} employee(s) successfully!`);
+    if (incomplete > 0) {
+      toast.warn(`${incomplete} employee(s) have incomplete profile data (education, grade, national ID, or emergency contact). Ask them to update their profiles.`);
     }
   };
 
@@ -232,13 +336,18 @@ const Employees = () => {
           <h1 className="text-3xl font-bold text-foreground">Employee Management</h1>
           <p className="text-muted-foreground">Manage your organization's workforce</p>
         </div>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild style={{ ...marginStyle, ...button }}>
-            <Button className="btn-gradient">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add Employee
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" onClick={handleExportExcel} style={{ ...marginStyle, ...button }} className="border-primary text-primary hover:bg-primary/10">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild style={{ ...marginStyle, ...button }}>
+              <Button className="btn-gradient">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Employee
+              </Button>
+            </DialogTrigger>
           <DialogContent style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <DialogHeader>
               <DialogTitle>Add New Employee</DialogTitle>
@@ -310,14 +419,51 @@ const Employees = () => {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input
-                  id="position"
-                  value={newEmployee.position}
-                  onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
-                  placeholder="Job title"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    value={newEmployee.position}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
+                    placeholder="Job title"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role *</Label>
+                  <Select 
+                    value={newEmployee.role} 
+                    onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="hr">HR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="educationLevel">Education Level</Label>
+                  <Input
+                    id="educationLevel"
+                    value={newEmployee.educationLevel}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, educationLevel: e.target.value })}
+                    placeholder="e.g. Bachelor's Degree"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gradeLevel">Grade / Level</Label>
+                  <Input
+                    id="gradeLevel"
+                    value={newEmployee.gradeLevel}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, gradeLevel: e.target.value })}
+                    placeholder="e.g. Senior, Level 3"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="joinDate">Join Date</Label>
@@ -339,6 +485,7 @@ const Employees = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -470,7 +617,7 @@ const Employees = () => {
                     </Avatar>
                     <div>
                       <h3 className="font-semibold text-foreground">{employee.name}</h3>
-                      <p className="text-sm text-muted-foreground">{employee.position}</p>
+                      <p className="text-sm text-muted-foreground">{employee.position} &bull; <span className="capitalize">{employee.role || 'Employee'}</span></p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -531,6 +678,7 @@ const Employees = () => {
                 <TableHead>Employee</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Position</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Salary</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
@@ -553,6 +701,7 @@ const Employees = () => {
                   </TableCell>
                   <TableCell>{employee.department}</TableCell>
                   <TableCell>{employee.position}</TableCell>
+                  <TableCell className="capitalize">{employee.role || 'employee'}</TableCell>
                   <TableCell>${(employee.salary ?? 0).toLocaleString()}</TableCell>
                   <TableCell>{getStatusBadge(employee.status)}</TableCell>
                    <TableCell>
@@ -646,14 +795,51 @@ const Employees = () => {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-position">Position</Label>
-                <Input
-                  id="edit-position"
-                  value={editingEmployee.position ?? ''}
-                  onChange={(e) => setEditingEmployee({ ...editingEmployee, position: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-position">Position</Label>
+                  <Input
+                    id="edit-position"
+                    value={editingEmployee.position ?? ''}
+                    onChange={(e) => setEditingEmployee({ ...editingEmployee, position: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Role *</Label>
+                  <Select 
+                    value={editingEmployee.role || 'employee'} 
+                    onValueChange={(value) => setEditingEmployee({ ...editingEmployee, role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="hr">HR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-educationLevel">Education Level</Label>
+                  <Input
+                    id="edit-educationLevel"
+                    value={editingEmployee.educationLevel ?? ''}
+                    onChange={(e) => setEditingEmployee({ ...editingEmployee, educationLevel: e.target.value })}
+                    placeholder="e.g. Bachelor's Degree"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-gradeLevel">Grade / Level</Label>
+                  <Input
+                    id="edit-gradeLevel"
+                    value={editingEmployee.gradeLevel ?? ''}
+                    onChange={(e) => setEditingEmployee({ ...editingEmployee, gradeLevel: e.target.value })}
+                    placeholder="e.g. Senior, Level 3"
+                  />
+                </div>
               </div>
+            </div>
             </div>
           )}
           <div className="flex justify-end space-x-2">
