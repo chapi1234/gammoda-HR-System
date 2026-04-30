@@ -84,6 +84,7 @@ const Profile = () => {
     skills: user?.skills || "",
     emergencyContact: user?.emergencyContact || "",
     emergencyPhone: user?.emergencyPhone || "",
+    nationalId: user?.nationalId || "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -485,6 +486,21 @@ const Profile = () => {
                       value={profileData.joinDate}
                       disabled
                       className="bg-muted"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nationalId">National ID</Label>
+                    <Input
+                      id="nationalId"
+                      placeholder="Enter your National ID"
+                      value={profileData.nationalId}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          nationalId: e.target.value,
+                        })
+                      }
+                      disabled={!isEditing}
                     />
                   </div>
                 </div>
